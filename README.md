@@ -18,4 +18,5 @@ L'équipe
 
 - IBRHIMI Othman ibrahimi.othman.2000@gmail.com
 - Maxime DANIEL maxime.daniel208@gmail.com
+- RAMIREZ Juan David jdramirezo@unal.edu.co
 
