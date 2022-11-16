@@ -17,3 +17,5 @@ L'équipe
 à compléter par chaque personne: 1 ligne par personne, indiquant le nom et l'adresse mail de la personne
 
 - IBRHIMI Othman ibrahimi.othman.2000@gmail.com
+- Maxime DANIEL maxime.daniel208@gmail.com
+
