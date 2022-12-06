@@ -1,6 +1,22 @@
 from typing import Literal, Self
 from scipy.spatial import distance
 
+# Ouverture et lecture du fichier par ligne
+with open('a_an_example.in.txt', 'r') as a_fichier:
+	contenu = a_fichier.readlines()
+
+#Chaque ligne est dans une liste et on supprime le caractère \n de chaque ligne et on sépare chaque élément de chaque ligne
+for ligne in contenu:
+	ligne.strip()
+	ligne.split()
+
+	# convertir en int les nombres et laisser en string les noms
+	for element in ligne :
+		if int(element) == True :
+			element = int(element)
+
+
+
 def isInRange(originX : int, originY : int, range: int, targetX : int, targetY : int) -> bool:
 	#ici j'utilise scipy car c'est une opération qui va etre répété très souvent et elle a bien interret a etre optimisé comme jaja
 	return distance.euclidean([originX,originY],[targetX,targetY]) <= range
