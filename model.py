@@ -1,6 +1,6 @@
 from typing import Literal
 from scipy.spatial import distance
-
+import math
 
 class accelerationCalculator():
 	"""
@@ -20,7 +20,7 @@ class accelerationCalculator():
 		#	[20,2],	-> de 11 a 20kg, acceleration max de 2
 		#	[50,1]	-> de 21 a 50kg, acceleration max de 1
 		# ]			-> au dela de 51kg, acceleration max de 0
-		self.ranges = ranges
+		self.ranges:list[list[int]] = ranges
 
 	def getMaxAcceleration(self,poids: int) -> int:
 		"""
@@ -44,7 +44,7 @@ class rangeCalculator:
 
 	def __init__(self,reachRange: int) -> None:
 		self.range = reachRange
-		self.rangeMask = []
+		self.rangeMask:list[list[bool]] = []
 		for i in range(reachRange*2 + 1):
 			row = []
 			for j in range(reachRange*2 + 1):
@@ -85,7 +85,7 @@ class cadeau:
 		self.positionY = positionY
 		self.delivre = False
 		self.enTransport = False
-		self.groupes = []  #il est impératif de ne jamais modifier directement cette liste (voir groupe.addCadeau et groupe.removeCadeau)
+		self.groupes:list[groupe] = []  #il est impératif de ne jamais modifier directement cette liste (voir groupe.addCadeau et groupe.removeCadeau)
 
 	def __lt__(self,other):
 		# ici je définis comment comparer deux tableau comme ça on pourra les trier par poids facilement avec .sort()
@@ -97,12 +97,12 @@ class groupe:
 		self.positionX = positionX
 		self.positionY = positionY
 		self.delivre = False
-		self.cadeaux = []  #il est impératif de ne jamais modifier directement cette liste (voir groupe.addCadeau et groupe.removeCadeau)
+		self.cadeaux:list[cadeau] = []  #il est impératif de ne jamais modifier directement cette liste (voir groupe.addCadeau et groupe.removeCadeau)
 	
 	def addCadeau(self, cadeau: cadeau) -> any:
 		if((cadeau not in self.cadeaux) and (self not in cadeau.groupes) ):
 			self.cadeaux.append(cadeau)
-			cadeau.groupes.append(self)
+			#cadeau.groupes.append(self)
 		else:
 			raise RuntimeWarning("un meme cadeau ne peut pas etre présent deux fois dans le meme groupe")
 		return self
@@ -120,36 +120,86 @@ class groupe:
 
 	def getScore(self) -> int:
 		return sum([(0 if elem.delivre else elem.score) for elem in self.cadeaux])
+class region():
+	def __init__(self,width:int,minX:int,maxX:int,minY:int,maxY:int,rangeCalculator:rangeCalculator) -> None:
+		self.minX = minX
+		self.maxX = maxX
+		self.minY = minY
+		self.maxY = maxY
+		self.width = width
+		self.range = rangeCalculator.range
+		self.rangeCalculator = rangeCalculator
+		self.cadeaux:list[cadeau] = []
+
+	def addCadeau(self,cadeau: cadeau) -> any:
+		self.cadeaux.append(cadeau)
+		return self
+
+	def getPoids(self) -> int:
+		return sum([(0 if elem.delivre else elem.poids) for elem in self.cadeaux])
+
+	def getScore(self) -> int:
+		return sum([(0 if elem.delivre else elem.score) for elem in self.cadeaux])
+
+	def getGroups(self) -> list[list[groupe]]:
+
+		# on crées les groupes vides
+		ret = []
+		for x in range(self.width):
+			row = []
+			for y in range(self.width):
+				row.append(groupe(x,y))
+			ret.append(row)
+
+		# on associes les cadeaux aux groupes
+		for cadeau in self.cadeaux:
+			for i in range(cadeau.positionX - self.range, cadeau.positionX + self.range):
+				for j in range(cadeau.positionY - self.range, cadeau.positionY + self.range):
+					if(i-self.minX >= 0 and i-self.minX < self.range and j-self.minY >= 0 and j-self.minY < self.range ):
+						if(self.rangeCalculator.isInRange(cadeau.positionX,cadeau.positionY,i,j)):
+							ret[i-self.minX][j-self.minY].addCadeau(cadeau)
+		
+		return ret
+
+
 
 class heatMap():
-
 	def __init__(self, reachRange: int, cadeaux: list[cadeau]) -> None:
-		self.cadeauxMap = {}
+		self.regions:list[list[region]] = []
 		self.range = reachRange
 		self.rangeCalculator = rangeCalculator(reachRange)
-		#première boucle, on crée tout les groupes, grossièrement du O(n²), mais les dimensions restant raisonnables ça devrait etre ok
+		self.regionSize = 100 # TODO: a fine tune, taille en cases d'un bloc "région"
+
+		# on détecte les limites
+		minX = math.inf
+		minY = math.inf
+		maxX = -math.inf
+		maxY = -math.inf
 		for cadeau in cadeaux:
-			self.cadeauxMap[(cadeau.positionX,cadeau.positionY)] = cadeau
+			minX = cadeau.positionX if cadeau.positionX < minX else minX
+			minY = cadeau.positionY if cadeau.positionY < minY else minY
+			maxX = cadeau.positionX if cadeau.positionX > maxX else maxX
+			maxY = cadeau.positionY if cadeau.positionY > maxY else maxY
 
-	def getScore(self,x,y) -> int:
-		score = 0
-		for i in range(x - self.range, x + self.range):
-			for j in range(y - self.range, y + self.range):
-				cadeau = self.cadeauxMap.get((i,j),None)
-				if(cadeau != None):
-					if(self.rangeCalculator.isInRange(i,j,x,y)):
-						score += cadeau.score
-		return score
+		width = maxX - minX
+		height = maxY - minY
 
-	def getGroupe(self,x,y) -> groupe:
-		g = groupe(x,y)
-		for i in range(x - self.range, x + self.range):
-			for j in range(y - self.range, y + self.range):
-				cadeau = self.cadeauxMap.get((i,j),None)
-				if(cadeau != None):
-					if(self.rangeCalculator.isInRange(i,j,x,y)):
-						g.addCadeau(cadeau)
-		return g
+		self.offsetX = minX
+		self.offsetY = minY
+
+		#on crées les régions en accordance
+		for i in range(width//self.regionSize+1):
+			row = []
+			for j in range(height//self.regionSize+1):
+				newMinX = minX + i * self.regionSize
+				newMinY = minY + j * self.regionSize
+				row.append(region(self.regionSize,newMinX,newMinX + self.regionSize,newMinY, newMinY + self.regionSize, self.rangeCalculator ))
+			self.regions.append(row)
+		
+		# on y ajoutes les cadeaux
+		for cadeau in cadeaux:
+			self.regions[(cadeau.positionX-self.offsetX)//self.regionSize][(cadeau.positionY-self.offsetY)//self.regionSize].addCadeau(cadeau)
+
 
 class traineau:
 	def __init__(self,reachRange: int, accelerationCalculator: accelerationCalculator) -> None:
@@ -158,7 +208,7 @@ class traineau:
 		self.vitesseX = 0
 		self.vitesseY = 0
 		self.nbCarottes = 0
-		self.cadeaux = []  #il est impératif de ne jamais modifier directement cette liste (voir traineau.chargerCadeau et traineau.livrerCadeau)
+		self.cadeaux:list[cadeau] = []  #il est impératif de ne jamais modifier directement cette liste (voir traineau.chargerCadeau et traineau.livrerCadeau)
 		self.range = reachRange
 		self.rangeCalculator = rangeCalculator(reachRange)
 		self.accelerationCalculator = accelerationCalculator
@@ -243,7 +293,7 @@ class chemin:
 	def __init__(self,begining: groupe, end: groupe) -> None:
 		self.begining = begining
 		self.end = end
-		self.travelActions = []
+		self.travelActions:list[list[str|int]] = []
 		# format de self.travelActions: 
 		# [
 		# 	["accLeft", 8],
@@ -262,7 +312,7 @@ class chemin:
 
 class boucle:
 	def __init__(self) -> None:
-		self.chemins = []
+		self.chemins:list[chemin] = []
 
 	def __str__(self) -> str:
 		#TODO : sérialisation - transformation de self.chemins en string ICI
@@ -270,7 +320,7 @@ class boucle:
 
 class parcoursFinal:
 	def __init__(self) -> None:
-		self.boucles = []
+		self.boucles:list[boucle] = []
 
 	def __str__(self) -> str:
 		#TODO : sérialisation - transformation de self.boucles en string ICI
