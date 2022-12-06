@@ -1,15 +1,38 @@
-from typing import Literal, Self
+from typing import Literal
 from scipy.spatial import distance
 
-def isInRange(originX : int, originY : int, range: int, targetX : int, targetY : int) -> bool:
-	#ici j'utilise scipy car c'est une opération qui va etre répété très souvent et elle a bien interret a etre optimisé comme jaja
-	return distance.euclidean([originX,originY],[targetX,targetY]) <= range
 
+class rangeCalculator:
+	def __init__(self,reachRange: int) -> None:
+		self.rangeMask = [[distance.euclidean([reachRange/2,reachRange/2],[i,j]) <= reachRange for j in range(reachRange)] for i in range(reachRange)]
+		
 
-class cadeau(object):
-	def __init__(self,nom: str, poids: int, positionX: int, positionY: int) -> None:
+	def isInRange(self, originX : int, originY : int, targetX : int, targetY : int) -> bool:
+		"""
+		méthode utile permettant de valider ou non si une case est accessible d'une autre
+
+		Args:
+			originX (int): coordonée x de la case d'origine
+			originY (int): coordonée y de la case d'origine
+			range (int): portée a laquelle on peut accéder
+			targetX (int): _description_
+			targetY (int): _description_
+
+		Returns:
+			bool: _description_
+		"""
+		x = originX - targetX
+		y = originY - targetY
+		return self.rangeMask[x][y]
+
+		#ici j'utilise scipy car c'est une opération qui va etre répété très souvent et elle a bien interret a etre optimisé comme jaja
+		#return distance.euclidean([originX,originY],[targetX,targetY]) <= range
+
+class cadeau:
+	def __init__(self,nom: str, poids: int, score: int, positionX: int, positionY: int) -> None:
 		self.nom = nom
 		self.poids = poids
+		self.score = score
 		self.positionX = positionX
 		self.positionY = positionY
 		self.delivre = False
@@ -28,7 +51,7 @@ class groupe:
 		self.delivre = False
 		self.cadeaux = []  #il est impératif de ne jamais modifier directement cette liste (voir groupe.addCadeau et groupe.removeCadeau)
 	
-	def addCadeau(self, cadeau: cadeau) -> Self:
+	def addCadeau(self, cadeau: cadeau) -> any:
 		if((cadeau not in self.cadeaux) and (self not in cadeau.groupes) ):
 			self.cadeaux.append(cadeau)
 			cadeau.groupes.append(self)
@@ -36,7 +59,7 @@ class groupe:
 			raise RuntimeWarning("un meme cadeau ne peut pas etre présent deux fois dans le meme groupe")
 		return self
 
-	def removeCadeau(self, cadeau: cadeau) -> Self:
+	def removeCadeau(self, cadeau: cadeau) -> any:
 		if((cadeau in self.cadeaux) and (self in cadeau.groupes) ):
 			self.cadeaux.remove(cadeau)
 			cadeau.groupes.remove(self)
@@ -47,22 +70,38 @@ class groupe:
 	def getPoids(self) -> int:
 		return sum([(0 if elem.delivre else elem.poids) for elem in self.cadeaux])
 
+	def getScore(self) -> int:
+		return sum([(0 if elem.delivre else elem.score) for elem in self.cadeaux])
 
-class heatMap:
-	def __init__(self, width: int, height: int, reachRange: int, cadeaux: list[cadeau]) -> None:
-		self.heatMap = []
-		#TODO : faire de l'optimisation vénère sur cette fonction, pas question de faire du O(n⁴)
-		for i in range(width):
-			self.heatMap[i] = []
-			for j in range(height):
-				self.heatMap[i][j] = groupe(i,j)
-				for cadeau in cadeaux:
-					if(isInRange(i,j,reachRange,cadeau.positionX,cadeau.positionY)):
-						self.self.heatMap[i][j].addCadeau(cadeau)
-		
+class heatMap():
+
+	def __init__(self, reachRange: int, cadeaux: list[cadeau]) -> None:
+		self.cadeauxMap = {}
+		self.range = reachRange
+		self.rangeCalculator = rangeCalculator(reachRange)
+		#première boucle, on crée tout les groupes, grossièrement du O(n²), mais les dimensions restant raisonnables ça devrait etre ok
+		for cadeau in cadeaux:
+			self.cadeauxMap[(cadeau.positionX,cadeau.positionY)] = cadeau
+
+	def getScore(self,x,y) -> int:
+		score = 0
+		for i in range(x - self.range, x + self.range):
+			for j in range(y - self.range, y + self.range):
+				cadeau = self.cadeauxMap.get((i,j),None)
+				if(cadeau != None):
+					if(self.rangeCalculator.isInRange(i,j,x,y)):
+						score += cadeau.score
+		return score
 
 	def getGroupe(self,x,y) -> groupe:
-		return self.heatMap[x][y]
+		g = groupe(x,y)
+		for i in range(x - self.range, x + self.range):
+			for j in range(y - self.range, y + self.range):
+				cadeau = self.cadeauxMap.get((i,j),None)
+				if(cadeau != None):
+					if(self.rangeCalculator.isInRange(i,j,x,y)):
+						g.addCadeau(cadeau)
+		return g
 
 class traineau:
 	def __init__(self,reachRange: int) -> None:
@@ -74,8 +113,9 @@ class traineau:
 		self.cadeaux = []  #il est impératif de ne jamais modifier directement cette liste (voir traineau.chargerCadeau et traineau.livrerCadeau)
 		self.range = reachRange
 		self.accelerationUpperBound = 4
+		self.rangeCalculator = rangeCalculator(reachRange)
 
-	def accelerer(self,quantity : int, direction : Literal["up","down","left","right"]) -> Self:
+	def accelerer(self,quantity : int, direction : Literal["up","down","left","right"]) -> any:
 		#TODO : integrer la verification de l'acceleration max par raport au chargement des cadeaux
 		if(quantity > self.accelerationUpperBound):
 			if(quantity < 0):
@@ -97,14 +137,14 @@ class traineau:
 			raise ValueError("il est impossible d'effectuer une acceleration au dela des limites imposées par le poids du traineau. Poids actuel : " + str(self.getPoids()) + " Acceleration max : " + str(self.accelerationUpperBound))
 		return self
 
-	def flotter(self, duration: int) -> Self:
+	def flotter(self, duration: int) -> any:
 		for i in range(duration):
 			self.positionX += self.vitesseX
 			self.positionY += self.vitesseY
 		return self
 			
-	def chargerCarotte(self,quantity: int) -> Self:
-		if(isInRange(self.positionX,self.positionY,self.range,0,0)):
+	def chargerCarotte(self,quantity: int) -> any:
+		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,0,0)):
 			if((self.nbCarottes + quantity) >= 0):
 				self.nbCarottes += quantity
 				self.updatePoids()
@@ -114,8 +154,8 @@ class traineau:
 			raise RuntimeWarning("il est impossible de charger des carottes si l'on n'est pas a porté de (0,0)")
 		return self
 		
-	def chargerCadeau(self, cadeau: cadeau) -> Self:
-		if(isInRange(self.positionX,self.positionY,self.range,0,0)):
+	def chargerCadeau(self, cadeau: cadeau) -> any:
+		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,0,0)):
 			if(cadeau not in self.cadeaux):
 				self.cadeaux.append(cadeau)
 				self.updatePoids()
@@ -125,8 +165,8 @@ class traineau:
 			raise RuntimeWarning("il est impossible de charger un cadeau si l'on n'est pas a porté de (0,0)")
 		return self
 
-	def livrerCadeau(self, cadeau: cadeau) -> Self:
-		if(isInRange(self.positionX,self.positionY,self.range,cadeau.positionX,cadeau.positionY)):
+	def livrerCadeau(self, cadeau: cadeau) -> any:
+		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,cadeau.positionX,cadeau.positionY)):
 			if(cadeau in self.cadeaux):
 				self.cadeaux.remove(cadeau)
 				cadeau.delivre = True
@@ -138,20 +178,20 @@ class traineau:
 			raise RuntimeWarning("il est impossible de charger un cadeau si l'on n'est pas a porté du point de dépot du cadeau")
 		return self
 
-	def chargerGroupe(self, groupe: groupe) -> Self:
+	def chargerGroupe(self, groupe: groupe) -> any:
 		for cadeau in groupe.cadeaux:
 			if(not cadeau.delivre):
 				self.chargerCadeau(cadeau)
 
 	
-	def livrerGroupe(self, groupe: groupe) -> Self:
+	def livrerGroupe(self, groupe: groupe) -> any:
 		if(self.positionX == groupe.positionX and self.positionY == groupe.positionY):
 			for cadeau in groupe.cadeaux:
 				if(cadeau in self.cadeaux):
 					self.livrerCadeau(cadeau)
 		raise RuntimeWarning("il faut se situer au coordonées exactes du groupe si l'on shouaite le livrer")
 
-	def updatePoids(self) -> Self:
+	def updatePoids(self) -> any:
 		poids = self.getPoids()
 		if(poids <= 30):
 			self.accelerationUpperBound = 4
