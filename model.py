@@ -1,4 +1,4 @@
-from typing import Literal, Self
+from typing import Literal
 from scipy.spatial import distance
 
 def isInRange(originX : int, originY : int, range: int, targetX : int, targetY : int) -> bool:
@@ -28,7 +28,7 @@ class groupe:
 		self.delivre = False
 		self.cadeaux = []  #il est impératif de ne jamais modifier directement cette liste (voir groupe.addCadeau et groupe.removeCadeau)
 	
-	def addCadeau(self, cadeau: cadeau) -> Self:
+	def addCadeau(self, cadeau: cadeau) -> any:
 		if((cadeau not in self.cadeaux) and (self not in cadeau.groupes) ):
 			self.cadeaux.append(cadeau)
 			cadeau.groupes.append(self)
@@ -36,7 +36,7 @@ class groupe:
 			raise RuntimeWarning("un meme cadeau ne peut pas etre présent deux fois dans le meme groupe")
 		return self
 
-	def removeCadeau(self, cadeau: cadeau) -> Self:
+	def removeCadeau(self, cadeau: cadeau) -> any:
 		if((cadeau in self.cadeaux) and (self in cadeau.groupes) ):
 			self.cadeaux.remove(cadeau)
 			cadeau.groupes.remove(self)
@@ -75,7 +75,7 @@ class traineau:
 		self.range = reachRange
 		self.accelerationUpperBound = 4
 
-	def accelerer(self,quantity : int, direction : Literal["up","down","left","right"]) -> Self:
+	def accelerer(self,quantity : int, direction : Literal["up","down","left","right"]) -> any:
 		#TODO : integrer la verification de l'acceleration max par raport au chargement des cadeaux
 		if(quantity > self.accelerationUpperBound):
 			if(quantity < 0):
@@ -97,13 +97,13 @@ class traineau:
 			raise ValueError("il est impossible d'effectuer une acceleration au dela des limites imposées par le poids du traineau. Poids actuel : " + str(self.getPoids()) + " Acceleration max : " + str(self.accelerationUpperBound))
 		return self
 
-	def flotter(self, duration: int) -> Self:
+	def flotter(self, duration: int) -> any:
 		for i in range(duration):
 			self.positionX += self.vitesseX
 			self.positionY += self.vitesseY
 		return self
 			
-	def chargerCarotte(self,quantity: int) -> Self:
+	def chargerCarotte(self,quantity: int) -> any:
 		if(isInRange(self.positionX,self.positionY,self.range,0,0)):
 			if((self.nbCarottes + quantity) >= 0):
 				self.nbCarottes += quantity
@@ -114,7 +114,7 @@ class traineau:
 			raise RuntimeWarning("il est impossible de charger des carottes si l'on n'est pas a porté de (0,0)")
 		return self
 		
-	def chargerCadeau(self, cadeau: cadeau) -> Self:
+	def chargerCadeau(self, cadeau: cadeau) -> any:
 		if(isInRange(self.positionX,self.positionY,self.range,0,0)):
 			if(cadeau not in self.cadeaux):
 				self.cadeaux.append(cadeau)
@@ -125,7 +125,7 @@ class traineau:
 			raise RuntimeWarning("il est impossible de charger un cadeau si l'on n'est pas a porté de (0,0)")
 		return self
 
-	def livrerCadeau(self, cadeau: cadeau) -> Self:
+	def livrerCadeau(self, cadeau: cadeau) -> any:
 		if(isInRange(self.positionX,self.positionY,self.range,cadeau.positionX,cadeau.positionY)):
 			if(cadeau in self.cadeaux):
 				self.cadeaux.remove(cadeau)
@@ -138,20 +138,20 @@ class traineau:
 			raise RuntimeWarning("il est impossible de charger un cadeau si l'on n'est pas a porté du point de dépot du cadeau")
 		return self
 
-	def chargerGroupe(self, groupe: groupe) -> Self:
+	def chargerGroupe(self, groupe: groupe) -> any:
 		for cadeau in groupe.cadeaux:
 			if(not cadeau.delivre):
 				self.chargerCadeau(cadeau)
 
 	
-	def livrerGroupe(self, groupe: groupe) -> Self:
+	def livrerGroupe(self, groupe: groupe) -> any:
 		if(self.positionX == groupe.positionX and self.positionY == groupe.positionY):
 			for cadeau in groupe.cadeaux:
 				if(cadeau in self.cadeaux):
 					self.livrerCadeau(cadeau)
 		raise RuntimeWarning("il faut se situer au coordonées exactes du groupe si l'on shouaite le livrer")
 
-	def updatePoids(self) -> Self:
+	def updatePoids(self) -> any:
 		poids = self.getPoids()
 		if(poids <= 30):
 			self.accelerationUpperBound = 4
@@ -183,6 +183,7 @@ class chemin:
 	def __str__(self) -> str:
 		#TODO : sérialisation - transformation de self.TravelActions en string ICI
 		pass
+
 
 class boucle:
 	def __init__(self) -> None:
