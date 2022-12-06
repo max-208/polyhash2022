@@ -2,6 +2,23 @@ from typing import Literal
 from scipy.spatial import distance
 
 
+class accelerationCalculator():
+	def __init__(self,ranges: list[list[int]]) -> None:
+		# structure :
+		# [			/!\ l'ordre des elements est important
+		#	[10,4],	-> de 0 a 10kg, acceleration max de 4
+		#	[20,2],	-> de 11 a 20kg, acceleration max de 2
+		#	[50,1]	-> de 21 a 50kg, acceleration max de 1
+		# ]			-> au dela de 51kg, acceleration max de 0
+		self.ranges = ranges
+		pass
+
+	def getMaxAcceleration(self,poids: int) -> int:
+		for range in self.config:
+			if(poids <= range[0] ):
+				return range[1]
+		return 0
+
 class rangeCalculator:
 	def __init__(self,reachRange: int) -> None:
 		self.rangeMask = [[distance.euclidean([reachRange/2,reachRange/2],[i,j]) <= reachRange for j in range(reachRange)] for i in range(reachRange)]
@@ -104,7 +121,7 @@ class heatMap():
 		return g
 
 class traineau:
-	def __init__(self,reachRange: int) -> None:
+	def __init__(self,reachRange: int, accelerationCalculator: accelerationCalculator) -> None:
 		self.positionX = 0 
 		self.positionY = 0
 		self.vitesseX = 0
@@ -112,12 +129,12 @@ class traineau:
 		self.nbCarottes = 0
 		self.cadeaux = []  #il est impératif de ne jamais modifier directement cette liste (voir traineau.chargerCadeau et traineau.livrerCadeau)
 		self.range = reachRange
-		self.accelerationUpperBound = 4
 		self.rangeCalculator = rangeCalculator(reachRange)
+		self.accelerationCalculator = accelerationCalculator
 
 	def accelerer(self,quantity : int, direction : Literal["up","down","left","right"]) -> any:
 		#TODO : integrer la verification de l'acceleration max par raport au chargement des cadeaux
-		if(quantity > self.accelerationUpperBound):
+		if(quantity > self.accelerationCalculator.getMaxAcceleration(self.getPoids())):
 			if(quantity < 0):
 				if(self.nbCarottes > 0):
 					if(direction == "up"):
@@ -134,7 +151,7 @@ class traineau:
 			else:
 				raise ValueError("il est impossible d'effectuer une acceleration négative")
 		else:
-			raise ValueError("il est impossible d'effectuer une acceleration au dela des limites imposées par le poids du traineau. Poids actuel : " + str(self.getPoids()) + " Acceleration max : " + str(self.accelerationUpperBound))
+			raise ValueError("il est impossible d'effectuer une acceleration au dela des limites imposées par le poids du traineau. Poids actuel : " + str(self.getPoids()) + " Acceleration max : " + str(self.accelerationCalculator.getMaxAcceleration(self.getPoids())))
 		return self
 
 	def flotter(self, duration: int) -> any:
@@ -147,7 +164,6 @@ class traineau:
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,0,0)):
 			if((self.nbCarottes + quantity) >= 0):
 				self.nbCarottes += quantity
-				self.updatePoids()
 			else:
 				raise RuntimeWarning("il est impossible d'avoir une quantité négative de carottes'")
 		else:
@@ -158,7 +174,6 @@ class traineau:
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,0,0)):
 			if(cadeau not in self.cadeaux):
 				self.cadeaux.append(cadeau)
-				self.updatePoids()
 			else:
 				raise RuntimeWarning("un meme cadeau ne peut pas etre chargé deux fois dans le traineau")
 		else:
@@ -170,7 +185,6 @@ class traineau:
 			if(cadeau in self.cadeaux):
 				self.cadeaux.remove(cadeau)
 				cadeau.delivre = True
-				self.updatePoids()
 				#TODO : implémenter le score
 			else:
 				raise RuntimeWarning("il est impossible de livrer un cadeau qui n'est pas chargé dans le trainneau")
@@ -190,15 +204,6 @@ class traineau:
 				if(cadeau in self.cadeaux):
 					self.livrerCadeau(cadeau)
 		raise RuntimeWarning("il faut se situer au coordonées exactes du groupe si l'on shouaite le livrer")
-
-	def updatePoids(self) -> any:
-		poids = self.getPoids()
-		if(poids <= 30):
-			self.accelerationUpperBound = 4
-		elif(poids <= 500):
-			self.accelerationUpperBound = 2
-		else:
-			self.accelerationUpperBound = 0
 			
 	def getPoids(self) -> int:
 		return sum([elem.poids for elem in self.cadeaux]) + self.nbCarottes
