@@ -3,7 +3,17 @@ from scipy.spatial import distance
 
 
 class accelerationCalculator():
+	"""
+	classe permettant de déterminer l'accélération maximale a partir d'un profil d'accélération
+	"""
+
 	def __init__(self,ranges: list[list[int]]) -> None:
+		"""
+		Args:
+			ranges (list[list[int]]): liste contenant des listes de deux éléments, \n
+				le premier element est le poids maximal de ce profil d'accélération,\n
+				le second element est l'accélération maximale possible via ce profil d'accélération
+		"""
 		# structure :
 		# [			/!\ l'ordre des elements est important
 		#	[10,4],	-> de 0 a 10kg, acceleration max de 4
@@ -11,17 +21,37 @@ class accelerationCalculator():
 		#	[50,1]	-> de 21 a 50kg, acceleration max de 1
 		# ]			-> au dela de 51kg, acceleration max de 0
 		self.ranges = ranges
-		pass
 
 	def getMaxAcceleration(self,poids: int) -> int:
+		"""
+		Retourne l'accélération maximale possible pour un poids donné par rapport a un certain profil d'accélération
+
+		Args:
+			poids (int): le poids du traineau pour lequel l'on doit calculer l'accélération maximale possible
+
+		Returns:
+			int: l'accélération maximale possible pour ce trainneau
+		"""
 		for range in self.config:
 			if(poids <= range[0] ):
 				return range[1]
 		return 0
 
 class rangeCalculator:
+	"""
+	classe permettant de déterminer si une case est 
+	"""
+
 	def __init__(self,reachRange: int) -> None:
-		self.rangeMask = [[distance.euclidean([reachRange/2,reachRange/2],[i,j]) <= reachRange for j in range(reachRange)] for i in range(reachRange)]
+		self.range = reachRange
+		self.rangeMask = []
+		for i in range(reachRange*2 + 1):
+			row = []
+			for j in range(reachRange*2 + 1):
+				row.append((distance.euclidean([reachRange,reachRange],[i,j]) <= reachRange))
+			self.rangeMask.append(row)
+				
+
 		
 
 	def isInRange(self, originX : int, originY : int, targetX : int, targetY : int) -> bool:
@@ -31,16 +61,17 @@ class rangeCalculator:
 		Args:
 			originX (int): coordonée x de la case d'origine
 			originY (int): coordonée y de la case d'origine
-			range (int): portée a laquelle on peut accéder
-			targetX (int): _description_
-			targetY (int): _description_
+			targetX (int): coordonée x de la case objectif
+			targetY (int): coordonée y de la case objectif
 
 		Returns:
-			bool: _description_
+			bool: vrai si l'objectif est a une distance inférieure de la porté de l'origine
 		"""
-		x = originX - targetX
-		y = originY - targetY
-		return self.rangeMask[x][y]
+		x = (targetX - originX) + self.range
+		y = (targetY - originY) + self.range
+		if(x >= 0 and x <= self.range*2 and y >= 0 and y <= self.range*2):
+			return self.rangeMask[x][y]
+		return False
 
 		#ici j'utilise scipy car c'est une opération qui va etre répété très souvent et elle a bien interret a etre optimisé comme jaja
 		#return distance.euclidean([originX,originY],[targetX,targetY]) <= range
