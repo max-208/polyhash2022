@@ -77,8 +77,8 @@ class traineau:
 
 	def accelerer(self,quantity : int, direction : Literal["up","down","left","right"]) -> any:
 		#TODO : integrer la verification de l'acceleration max par raport au chargement des cadeaux
-		if(quantity > self.accelerationUpperBound):
-			if(quantity < 0):
+		if(quantity <= self.accelerationUpperBound):
+			if(quantity > 0):
 				if(self.nbCarottes > 0):
 					if(direction == "up"):
 						self.vitesseY += quantity
