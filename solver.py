@@ -78,29 +78,27 @@ class CheminSimple:
         print(self.santa.getPoids(),self.santa.positionX,self.santa.positionY)
 
     def move(self):
+        self.tracker()
         self.acc_init()
         self.tracker()
         t = 0
-        if self.santa.positionY != a.y-1 and self.santa.positionX =! a.x-1:
+        while self.santa.positionY != self.fin.y-1 and self.santa.positionX != self.fin.x-1:
             self.tracker()
-            self.santa.flotter(t)
+            self.santa.flotter(1)
             t += 1
-        else:
-            self.santa.flotter(1)
-            self.stop_r()
-            self.santa.flotter(1)
-            self.stop_c()
+        self.santa.flotter(1)
+        self.stop_r()
+        self.tracker()
+        self.santa.flotter(1)
+        self.stop_c()
+        self.tracker()
 
 
 
 
 P1 = SantaPoint(0, 0)
-P2 = SantaPoint(5, 5)
+P2 = SantaPoint(6, 6)
 S1 = traineau(3)
 S1.chargerCarotte(10)
-C1= CheminSimple(P1, P2, S1)
-C1.acc_init()
-C1.tracker()
-S1.flotter(1)
-C1.tracker()
-
+C1 = CheminSimple(P1, P2, S1)
+C1.move()
