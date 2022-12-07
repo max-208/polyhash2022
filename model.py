@@ -21,21 +21,38 @@ class accelerationCalculator:
 		#	[50,1]	-> de 21 a 50kg, acceleration max de 1
 		# ]			-> au dela de 51kg, acceleration max de 0
 		self.ranges:list[list[int]] = ranges
+		self.currentMaxAcceleration = self.ranges[0][1]
 
-	def getMaxAcceleration(self,poids: int) -> int:
+	def getMaxAcceleration(self) -> int:
 		"""
-		Retourne l'accélération maximale possible pour un poids donné par rapport a un certain profil d'accélération
+		Retourne l'accélération maximale possible pour par rapport a un certain profil d'accélération et au poids mis a jour par updatePoids
+
+		Returns:
+			int: l'accélération maximale possible pour ce trainneau
+		"""
+		return self.currentMaxAcceleration
+	
+	def updatePoids(self,poids: int) -> any:
+		"""
+		met a jour l'accélération maximale du traineau
 
 		Args:
 			poids (int): le poids du traineau pour lequel l'on doit calculer l'accélération maximale possible
 
 		Returns:
-			int: l'accélération maximale possible pour ce trainneau
+			traineau: soi-meme
 		"""
 		for range in self.config:
 			if(poids <= range[0] ):
-				return range[1]
-		return 0
+				self.currentMaxAcceleration = range[1]
+				return self
+		self.currentMaxAcceleration = 0
+		return self
+
+
+
+
+		
 
 class rangeCalculator:
 	"""
@@ -349,7 +366,7 @@ class traineau:
 			traineau: soi-meme
 		"""
 		#TODO : integrer la verification de l'acceleration max par raport au chargement des cadeaux
-		if(quantity <= self.accelerationCalculator.getMaxAcceleration(self.getPoids())):
+		if(quantity <= self.accelerationCalculator.getMaxAcceleration()):
 			if(quantity >= 0):
 				if(self.nbCarottes > 0):
 					if(direction == "up"):
@@ -366,7 +383,7 @@ class traineau:
 			else:
 				raise ValueError("il est impossible d'effectuer une acceleration négative")
 		else:
-			raise ValueError("il est impossible d'effectuer une acceleration au dela des limites imposées par le poids du traineau. Poids actuel : " + str(self.getPoids()) + " Acceleration max : " + str(self.accelerationCalculator.getMaxAcceleration(self.getPoids())))
+			raise ValueError("il est impossible d'effectuer une acceleration au dela des limites imposées par le poids du traineau. Poids actuel : " + str(self.getPoids()) + " Acceleration max : " + str(self.accelerationCalculator.getMaxAcceleration()))
 		return self
 
 	def flotter(self, duration: int) -> any:
@@ -401,6 +418,7 @@ class traineau:
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,0,0)):
 			if((self.nbCarottes + quantity) >= 0):
 				self.nbCarottes += quantity
+				self.accelerationCalculator.updatePoids(self.getPoids())
 			else:
 				raise RuntimeWarning("il est impossible d'avoir une quantité négative de carottes'")
 		else:
@@ -424,6 +442,7 @@ class traineau:
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,0,0)):
 			if(cadeau not in self.cadeaux):
 				self.cadeaux.append(cadeau)
+				self.accelerationCalculator.updatePoids(self.getPoids())
 			else:
 				raise RuntimeWarning("un meme cadeau ne peut pas etre chargé deux fois dans le traineau")
 		else:
@@ -447,6 +466,7 @@ class traineau:
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,cadeau.positionX,cadeau.positionY)):
 			if(cadeau in self.cadeaux):
 				self.cadeaux.remove(cadeau)
+				self.accelerationCalculator.updatePoids(self.getPoids())
 				cadeau.delivre = True
 				#TODO : implémenter le score
 			else:
