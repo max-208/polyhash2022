@@ -318,11 +318,16 @@ class chemin:
     # 	["LoadCarrots", 2],
     # 	["LoadGift", "Amine"]
     # ]
+    def GetNbActions(self)-> int :
+        return len(self.travelActions)
 
     # TODO : parcours simple - calcul et création des instructions du chemin ici, possibilité d'utilise un objet Traineau
 
     def __str__(self) -> str:
-        # TODO : sérialisation - transformation de self.TravelActions en string ICI
+        with open('Submission_file.txt', 'w') as submission:
+            submission.write(f'{self.GetNbActions()}')
+            for listeditem in self.travelActions:
+                submission.write(listeditem + '\n')
         pass
 
 
@@ -344,22 +349,26 @@ class parcoursFinal:
         pass
 
 
-with open('a_an_example.in.txt', 'r') as a_fichier:
-    contenu = a_fichier.readlines()
+filename = "a_an_example.in.txt"
 
-weightsParAccel = list()
+def read(filename: str):
+    with open(filename, 'r') as a_fichier:
+        contenu = a_fichier.readlines()
 
-for ligne in contenu:
-    if contenu.index(ligne) == 0:
-        secondes = int(ligne.split()[0])
-        traineau(int(ligne.split()[1]))
-        accel_range = int(ligne.split()[2])
-        nb_cadeaux = int(ligne.split()[3])
+    weightsParAccel = list()
 
-    elif 1 <= contenu.index(ligne) <= accel_range:
-        weightsParAccel[contenu.index(ligne)-1] = [int(ligne.split()[0],int(ligne.split()[1]))]
+    for ligne in contenu:
+        if contenu.index(ligne) == 0:
+            secondes = int(ligne.split()[0])
+            traineau(int(ligne.split()[1]))
+            accel_range = int(ligne.split()[2])
+            nb_cadeaux = int(ligne.split()[3])
 
-    elif accel_range < contenu.index(ligne) <= (accel_range + nb_cadeaux):
-        cadeau(ligne.split()[0], int(ligne.split()[1]), int(ligne.split()[2]), int(ligne.split()[3]), int(ligne.split()[4]))
+        elif 1 <= contenu.index(ligne) <= accel_range:
+            weightsParAccel[contenu.index(ligne) - 1] = [int(ligne.split()[0], int(ligne.split()[1]))]
 
-accelerationCalculator(weightsParAccel)
+        elif accel_range < contenu.index(ligne) <= (accel_range + nb_cadeaux):
+            cadeau(ligne.split()[0], int(ligne.split()[1]), int(ligne.split()[2]), int(ligne.split()[3]),
+                   int(ligne.split()[4]))
+
+    accelerationCalculator(weightsParAccel)
