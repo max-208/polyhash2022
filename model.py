@@ -75,7 +75,7 @@ class traineau:
 		self.range = reachRange
 		self.accelerationUpperBound = 4
 
-	def accelerer(self,quantity : int, direction : Literal["up","down","left","right"]) -> any:
+	def accelerer(self,quantity : float, direction : Literal["up","down","left","right"]) -> any:
 		#TODO : integrer la verification de l'acceleration max par raport au chargement des cadeaux
 		if(quantity <= self.accelerationUpperBound):
 			if(quantity > 0):
