@@ -365,16 +365,16 @@ weightsParAccel = list()
 for ligne in contenu:
     if contenu.index(ligne) == 0:
         secondes = int(ligne.split()[0])
-        traineau(int(ligne.split()[1]), accelerationCalculator)
+        reachRangeTraineau = int(ligne.split()[1])
         accel_range = int(ligne.split()[2])
         nb_cadeaux = int(ligne.split()[3])
 
     elif 1 <= contenu.index(ligne) <= accel_range:
         weightsParAccel.append([int(ligne.split()[0]), int(ligne.split()[1])])
+        traineau(reachRangeTraineau, accelerationCalculator(weightsParAccel))
 
     elif accel_range < contenu.index(ligne) <= (accel_range + nb_cadeaux):
         cadeau(ligne.split()[0], int(ligne.split()[1]), int(ligne.split()[2]), int(ligne.split()[3]),int(ligne.split()[4]))
 
-accelerationCalculator(weightsParAccel)
 
 
