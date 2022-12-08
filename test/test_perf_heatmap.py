@@ -27,6 +27,12 @@ for i in map.regions:
 t2 = time.perf_counter()
 print(f"Recuperation du poids par région {t2 - t1:0.4f} Secondes")
 t1 = time.perf_counter()
+for k in map.regions[0][0].getGroups():
+	for m in k:
+		m.getPoids()
+t2 = time.perf_counter()
+print(f"Chargement du poids de 1 région  {t2 - t1:0.4f} Secondes")
+t1 = time.perf_counter()
 for i in map.regions:
 	for j in i:
 		for k in j.getGroups():

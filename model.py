@@ -3,7 +3,7 @@ from scipy.spatial import distance
 import math
 from tkinter import *
 
-class accelerationCalculator():
+class accelerationCalculator:
 	"""
 	classe permettant de déterminer l'accélération maximale a partir d'un profil d'accélération
 	"""
@@ -22,22 +22,38 @@ class accelerationCalculator():
 		#	[50,1]	-> de 21 a 50kg, acceleration max de 1
 		# ]			-> au dela de 51kg, acceleration max de 0
 		self.ranges:list[list[int]] = ranges
+		self.currentMaxAcceleration = self.ranges[0][1]
 
-	def getMaxAcceleration(self,poids: int) -> int:
+	def getMaxAcceleration(self) -> int:
 		"""
-		Retourne l'accélération maximale possible pour un poids donné par rapport a un certain profil d'accélération
-from tkinter import *
+		Retourne l'accélération maximale possible pour par rapport a un certain profil d'accélération et au poids mis a jour par updatePoids
+
+		Returns:
+			int: l'accélération maximale possible pour ce trainneau
+		"""
+		return self.currentMaxAcceleration
+
+	def updatePoids(self,poids: int) -> any:
+		"""
+		met a jour l'accélération maximale du traineau
 
 		Args:
 			poids (int): le poids du traineau pour lequel l'on doit calculer l'accélération maximale possible
 
 		Returns:
-			int: l'accélération maximale possible pour ce trainneau
+			traineau: soi-meme
 		"""
 		for range in self.config:
 			if(poids <= range[0] ):
-				return range[1]
-		return 0
+				self.currentMaxAcceleration = range[1]
+				return self
+		self.currentMaxAcceleration = 0
+		return self
+
+
+
+
+
 
 class rangeCalculator:
 	"""
@@ -52,9 +68,9 @@ class rangeCalculator:
 			for j in range(reachRange*2 + 1):
 				row.append((distance.euclidean([reachRange,reachRange],[i,j]) <= reachRange))
 			self.rangeMask.append(row)
+				
 
-
-
+		
 
 	def isInRange(self, originX : int, originY : int, targetX : int, targetY : int) -> bool:
 		"""
@@ -79,7 +95,19 @@ class rangeCalculator:
 		#return distance.euclidean([originX,originY],[targetX,targetY]) <= range
 
 class cadeau:
+	"""
+	classe représentant les cadeaux et les informations qui leur sont associés : endroit de livraison, poids, score, ainsi que des informations sur son statut de transport
+	"""
+
 	def __init__(self,nom: str, poids: int, score: int, positionX: int, positionY: int) -> None:
+		"""
+		Args:
+			nom (str): nom du récipient du cadeau
+			poids (int): poids du cadeau
+			score (int): score du cadeau
+			positionX (int): position en x du point de livraison du cadeau
+			positionY (int): position en y du point de livraison du cadeau
+		"""
 		self.nom = nom
 		self.poids = poids
 		self.score = score
@@ -87,7 +115,6 @@ class cadeau:
 		self.positionY = positionY
 		self.delivre = False
 		self.enTransport = False
-		self.groupes:list[groupe] = []  #il est impératif de ne jamais modifier directement cette liste (voir groupe.addCadeau et groupe.removeCadeau)
 
 	def __lt__(self,other):
 		# ici je définis comment comparer deux tableau comme ça on pourra les trier par poids facilement avec .sort()
@@ -95,35 +122,96 @@ class cadeau:
 		return self.poids < other.poids
 
 class groupe:
+	"""
+	classe représentant les "groupes" de cadeaux,
+	c'est a dire un point a partir duquel il est possible de délivrer plusieurs cadeau d'un coup
+	il existe pour chaque pixel de la grille un groupe, chacun accedant à un certain nombre de cadeaux
+	"""
 	def __init__(self, positionX: int, positionY: int) -> None:
+		"""
+
+		Args:
+			positionX (int): position en x du groupe
+			positionY (int): position en y du groupe
+		"""
 		self.positionX = positionX
 		self.positionY = positionY
 		self.delivre = False
 		self.cadeaux:list[cadeau] = []  #il est impératif de ne jamais modifier directement cette liste (voir groupe.addCadeau et groupe.removeCadeau)
 	
 	def addCadeau(self, cadeau: cadeau) -> any:
-		if((cadeau not in self.cadeaux) and (self not in cadeau.groupes) ):
+		"""
+		Insère un cadeau dans un groupe
+
+		Args:
+			cadeau (cadeau): le cadeau a ajouter
+
+		Raises:
+			RuntimeWarning: si un cadeau est inséré deux fois dans le meme groupe
+
+		Returns:
+			groupe: lui-meme
+		"""
+		if((cadeau not in self.cadeaux)):
 			self.cadeaux.append(cadeau)
-			#cadeau.groupes.append(self)
 		else:
 			raise RuntimeWarning("un meme cadeau ne peut pas etre présent deux fois dans le meme groupe")
 		return self
 
 	def removeCadeau(self, cadeau: cadeau) -> any:
-		if((cadeau in self.cadeaux) and (self in cadeau.groupes) ):
+		"""
+		retire un cadeau du groupe
+
+		Args:
+			cadeau (cadeau): le cadeau a retirer
+
+		Raises:
+			RuntimeWarning: si un cadeau retiré n'etait pas dans le groupe
+
+		Returns:
+			groupe: lui-meme
+		"""
+		if((cadeau in self.cadeaux) ):
 			self.cadeaux.remove(cadeau)
-			cadeau.groupes.remove(self)
 		else:
 			raise RuntimeWarning("il est impossible de retirer un cadeau d'un groupe si celui-ci n'en fait pas partie")
 		return self
 
 	def getPoids(self) -> int:
+		"""
+		retourne le poids du groupe (somme cummulée du poids de tout les cadeaux accesibles via ce groupe)
+
+		Returns:
+			int: poids du groupe
+		"""
 		return sum([(0 if elem.delivre else elem.poids) for elem in self.cadeaux])
 
 	def getScore(self) -> int:
+		"""
+		retourne le score du groupe (somme cummulée du score de tout les cadeaux accesibles via ce groupe)
+
+		Returns:
+			int: score du groupe
+		"""
 		return sum([(0 if elem.delivre else elem.score) for elem in self.cadeaux])
+
 class region():
+	"""
+	Une région représente une "section" de la heatMap d'une certaine taille,
+	l'objectif de cette classe est de rapidement avoir une information sur une zone
+	pour en déterminer la valeur avant d'y lancer une recherche précise
+	"""
 	def __init__(self,width:int,minX:int,maxX:int,minY:int,maxY:int,rangeCalculator:rangeCalculator) -> None:
+		"""
+
+		Args:
+			width (int): largeur et hauteur de la région (elles sont toujours carrées)
+			minX (int): coordonée x minimale incluse dans la région
+			maxX (int): coordonée x maximale incluse dans la région
+			minY (int): coordonée y minimale incluse dans la région
+			maxY (int): coordonée y maximale incluse dans la région
+			rangeCalculator (rangeCalculator): l'objet permettant le calcul des portées
+		"""
 		self.minX = minX
 		self.maxX = maxX
 		self.minY = minY
@@ -134,17 +222,45 @@ class region():
 		self.cadeaux:list[cadeau] = []
 
 	def addCadeau(self,cadeau: cadeau) -> any:
+		"""
+		ajoute un cadeau a une région
+
+		Args:
+			cadeau (cadeau): cadeau a ajouter
+
+		Returns:
+			region: soi-meme
+		"""
 		self.cadeaux.append(cadeau)
 		return self
 
 	def getPoids(self) -> int:
+		"""
+		retourne rapidement le poids global de la région
+		(somme des poids individuels de tout les cadeaux de la région)
+
+		Returns:
+			int: poids global de la région
+		"""
 		return sum([(0 if elem.delivre else elem.poids) for elem in self.cadeaux])
 
 	def getScore(self) -> int:
+		"""
+		retourne rapidement le score global de la région
+		(somme des score individuels de tout les cadeaux de la région)
+
+		Returns:
+			int: score global de la région
+		"""
 		return sum([(0 if elem.delivre else elem.score) for elem in self.cadeaux])
 
 	def getGroups(self) -> list[list[groupe]]:
+		"""
+		génère un tableau 2D contenant tout les groupes de cette région
 
+		Returns:
+			list[list[groupe]]: un tableau 2D contenant tout les groupes de cette région
+		"""
 		# on crées les groupes vides
 		ret = []
 		for x in range(self.width):
@@ -160,13 +276,23 @@ class region():
 					if(i-self.minX >= 0 and i-self.minX < self.range and j-self.minY >= 0 and j-self.minY < self.range ):
 						if(self.rangeCalculator.isInRange(cadeau.positionX,cadeau.positionY,i,j)):
 							ret[i-self.minX][j-self.minY].addCadeau(cadeau)
-
+		
 		return ret
 
 
 
-class heatMap():
+class heatMap:
+	"""
+	classe représentant une "heatmap" soit une carte globale contenant des régions qui elles meme contiennent des groupes
+	"""
+
 	def __init__(self, reachRange: int, cadeaux: list[cadeau]) -> None:
+		"""
+
+		Args:
+			reachRange (int): portée a partir de laquelle il est possible d'accéder au cadeaux
+			cadeaux (list[cadeau]): liste des cadeaux contenus dans cette heatmap
+		"""
 		self.regions:list[list[region]] = []
 		self.range = reachRange
 		self.rangeCalculator = rangeCalculator(reachRange)
@@ -197,7 +323,7 @@ class heatMap():
 				newMinY = minY + j * self.regionSize
 				row.append(region(self.regionSize,newMinX,newMinX + self.regionSize,newMinY, newMinY + self.regionSize, self.rangeCalculator ))
 			self.regions.append(row)
-
+		
 		# on y ajoutes les cadeaux
 		for cadeau in cadeaux:
 			self.regions[(cadeau.positionX-self.offsetX)//self.regionSize][(cadeau.positionY-self.offsetY)//self.regionSize].addCadeau(cadeau)
@@ -242,21 +368,46 @@ class heatMap():
 		return self.heatMap[x][y]
 
 class traineau:
+	"""
+	classe représentant le traineau du pere noel, a pour but de simuler ses déplacements a la fois pour le solver et le scorer
+	"""
 	def __init__(self,reachRange: int, accelerationCalculator: accelerationCalculator) -> None:
-		self.positionX = 0 
+		"""
+
+		Args:
+			reachRange (int): portée a partir de laquelle il est possible d'accéder au cadeaux
+			accelerationCalculator (accelerationCalculator): courbe d'accélération du pere noel
+		"""
+		self.positionX = 0
 		self.positionY = 0
 		self.vitesseX = 0
 		self.vitesseY = 0
 		self.nbCarottes = 0
 		self.cadeaux:list[cadeau] = []  #il est impératif de ne jamais modifier directement cette liste (voir traineau.chargerCadeau et traineau.livrerCadeau)
 		self.range = reachRange
+		self.poids = 0
 		self.rangeCalculator = rangeCalculator(reachRange)
 		self.accelerationCalculator = accelerationCalculator
 
 	def accelerer(self,quantity : int, direction : Literal["up","down","left","right"]) -> any:
+		"""
+		accelere le pere noel dans une direction
+
+		Args:
+			quantity (int): accélération en m/s a rajouter
+			direction (&quot;up&quot;,&quot;down&quot;,&quot;left&quot;,&quot;right&quot;): direction de l'accélération
+
+		Raises:
+			RuntimeWarning: si on accelere sans carottes
+			ValueError: si on effectue une accélération négative
+			ValueError: si on effectue une accélération plus haute que l'accélération max
+
+		Returns:
+			traineau: soi-meme
+		"""
 		#TODO : integrer la verification de l'acceleration max par raport au chargement des cadeaux
-		if(quantity > self.accelerationCalculator.getMaxAcceleration(self.getPoids())):
-			if(quantity < 0):
+		if(quantity <= self.accelerationCalculator.getMaxAcceleration()):
+			if(quantity >= 0):
 				if(self.nbCarottes > 0):
 					if(direction == "up"):
 						self.vitesseY += quantity
@@ -272,19 +423,43 @@ class traineau:
 			else:
 				raise ValueError("il est impossible d'effectuer une acceleration négative")
 		else:
-			raise ValueError("il est impossible d'effectuer une acceleration au dela des limites imposées par le poids du traineau. Poids actuel : " + str(self.getPoids()) + " Acceleration max : " + str(self.accelerationCalculator.getMaxAcceleration(self.getPoids())))
+			raise ValueError("il est impossible d'effectuer une acceleration au dela des limites imposées par le poids du traineau. Poids actuel : " + str(self.getPoids()) + " Acceleration max : " + str(self.accelerationCalculator.getMaxAcceleration()))
 		return self
 
 	def flotter(self, duration: int) -> any:
+		"""
+		classe faisant passer le temps, la position du traineau change selon sa vélocité actuelle
+
+		Args:
+			duration (int): durée en seconde a flotter
+
+		Returns:
+			traineau: soi-meme
+		"""
 		for i in range(duration):
 			self.positionX += self.vitesseX
 			self.positionY += self.vitesseY
 		return self
 			
 	def chargerCarotte(self,quantity: int) -> any:
+		"""
+		charge une ou plus carotte sur le pere noel
+
+		Args:
+			quantity (int): quantité de carottes a charger
+
+		Raises:
+			RuntimeWarning: si l'on est trop loins de (0,0) pour charger des carottes
+			RuntimeWarning: si l'on essaie de retirer plus de carottes que n'en contient le traineau
+
+		Returns:
+			any: _description_
+		"""
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,0,0)):
 			if((self.nbCarottes + quantity) >= 0):
 				self.nbCarottes += quantity
+				self.poids += quantity
+				self.accelerationCalculator.updatePoids(self.getPoids())
 			else:
 				raise RuntimeWarning("il est impossible d'avoir une quantité négative de carottes'")
 		else:
@@ -292,9 +467,24 @@ class traineau:
 		return self
 		
 	def chargerCadeau(self, cadeau: cadeau) -> any:
+		"""
+		charge un cadeau sur le traineau
+
+		Args:
+			cadeau (cadeau): le cadeau a charger
+
+		Raises:
+			RuntimeWarning: si l'on est trop loin de (0,0) pour charger un cadeau
+			RuntimeWarning: si le cadeau est déja dans le traineau
+
+		Returns:
+			traineau: soi-meme
+		"""
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,0,0)):
 			if(cadeau not in self.cadeaux):
 				self.cadeaux.append(cadeau)
+				self.poids += cadeau.poids
+				self.accelerationCalculator.updatePoids(self.getPoids())
 			else:
 				raise RuntimeWarning("un meme cadeau ne peut pas etre chargé deux fois dans le traineau")
 		else:
@@ -302,36 +492,91 @@ class traineau:
 		return self
 
 	def livrerCadeau(self, cadeau: cadeau) -> any:
+		"""
+		livre un cadeau a son lieu d'arrivée défini
+
+		Args:
+			cadeau (cadeau): le cadeau a livrer
+
+		Raises:
+			RuntimeWarning: si l'on est trop loin du point de dépot du cadeau pour livrer
+			RuntimeWarning: si on essaie de livrer un cadeau qui n'est pas sur le traineau
+
+		Returns:
+			traineau: soi-meme
+		"""
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,cadeau.positionX,cadeau.positionY)):
 			if(cadeau in self.cadeaux):
 				self.cadeaux.remove(cadeau)
+				self.poids += -cadeau.poids
+				self.accelerationCalculator.updatePoids(self.getPoids())
 				cadeau.delivre = True
 				#TODO : implémenter le score
 			else:
-				raise RuntimeWarning("il est impossible de livrer un cadeau qui n'est pas chargé dans le trainneau")
+				raise RuntimeWarning("il est impossible de livrer un cadeau qui n'est pas chargé dans le traineau")
 		else:
-			raise RuntimeWarning("il est impossible de charger un cadeau si l'on n'est pas a porté du point de dépot du cadeau")
+			raise RuntimeWarning("il est impossible de livrer un cadeau si l'on n'est pas a porté du point de dépot du cadeau")
 		return self
 
 	def chargerGroupe(self, groupe: groupe) -> any:
+		"""
+		charge un groupe entier de cadeau sur le trainneau
+
+		Args:
+			groupe (groupe): le groupe a charger
+
+		Returns:
+			traineau: soi-meme
+		"""
 		for cadeau in groupe.cadeaux:
 			if(not cadeau.delivre):
 				self.chargerCadeau(cadeau)
+		return self
 
 	
 	def livrerGroupe(self, groupe: groupe) -> any:
+		"""
+		livre un groupe entier de cadeaux
+
+		Args:
+			groupe (groupe): le groupe a livrer
+
+		Raises:
+			RuntimeWarning: si le traineau n'est pas sur la position exacte du groupe
+
+		Returns:
+			traineau: soi-meme
+		"""
 		if(self.positionX == groupe.positionX and self.positionY == groupe.positionY):
 			for cadeau in groupe.cadeaux:
 				if(cadeau in self.cadeaux):
 					self.livrerCadeau(cadeau)
-		raise RuntimeWarning("il faut se situer au coordonées exactes du groupe si l'on shouaite le livrer")
+		else:
+			raise RuntimeWarning("il faut se situer au coordonées exactes du groupe si l'on shouaite le livrer")
+		return self
 
-
+			
 	def getPoids(self) -> int:
-		return sum([elem.poids for elem in self.cadeaux]) + self.nbCarottes
+		"""
+		retourne le poids chargé sur le traineau
+
+		Returns:
+			int: le poids chargé
+		"""
+		return self.poids
+		#return sum([elem.poids for elem in self.cadeaux]) + self.nbCarottes
 
 class chemin:
+	"""
+	classe représentant un chemin, un chemin est une suite d'actions représentant un mouvement
+	"""
 	def __init__(self,begining: groupe, end: groupe) -> None:
+		"""
+
+		Args:
+			begining (groupe): groupe de début du chemin
+			end (groupe): groupe de fin du chemin
+		"""
 		self.begining = begining
 		self.end = end
 		self.travelActions:list[list[str|int]] = []
@@ -352,6 +597,9 @@ class chemin:
 		pass
 
 class boucle:
+	"""
+	classe représentant une boucle, soit un ensemble de chemins revenant au meme point d'origine
+	"""
 	def __init__(self) -> None:
 		self.chemins:list[chemin] = []
 
@@ -360,6 +608,9 @@ class boucle:
 		pass
 
 class parcoursFinal:
+	"""
+	classe représentant le parcours final, soit un ensemble de boucles
+	"""
 	def __init__(self) -> None:
 		self.boucles:list[boucle] = []
 
