@@ -8,8 +8,8 @@ class accelerationCalculator:
 	classe permettant de déterminer l'accélération maximale a partir d'un profil d'accélération
 	"""
 
-    def __init__(self, ranges: list[list[int]]) -> None:
-        """
+	def __init__(self, ranges: list[list[int]]) -> None:
+		"""
 		Args:
 			ranges (list[list[int]]): liste contenant des listes de deux éléments, \n
 				le premier element est le poids maximal de ce profil d'accélération,\n
@@ -41,9 +41,9 @@ class accelerationCalculator:
 			poids (int): le poids du traineau pour lequel l'on doit calculer l'accélération maximale possible
 
 		Returns:
-			traineau: soi-meme
+			accelerationCalculator: soi-meme
 		"""
-		for range in self.config:
+		for range in self.ranges:
 			if(poids <= range[0] ):
 				self.currentMaxAcceleration = range[1]
 				return self
@@ -361,12 +361,6 @@ class heatMap:
 		mainloop()
 
 
-
-
-
-	def getGroupe(self,x,y) -> groupe:
-		return self.heatMap[x][y]
-
 class traineau:
 	"""
 	classe représentant le traineau du pere noel, a pour but de simuler ses déplacements a la fois pour le solver et le scorer
@@ -592,12 +586,12 @@ class chemin:
 
 		#TODO : parcours simple - calcul et création des instructions du chemin ici, possibilité d'utilise un objet Traineau
 
-    def __str__(self) -> str:
-        chemin_str = str()
-        for ligne in self.travelActions:
-            ligne[1] = str(ligne[1])
-            chemin_str = chemin_str + ' '.join(ligne) + '\n'
-        return chemin_str
+	def __str__(self) -> str:
+		chemin_str = str()
+		for ligne in self.travelActions:
+			ligne[1] = str(ligne[1])
+			chemin_str = chemin_str + ' '.join(ligne) + '\n'
+		return chemin_str
 
 
 class boucle:
@@ -607,12 +601,12 @@ class boucle:
 	def __init__(self) -> None:
 		self.chemins:list[chemin] = []
 
-    def __str__(self) -> str:
-        # TODO : sérialisation - transformation de self.chemins en string ICI
-        boucle_str = str()
-        for element in self.chemins:
-            boucle_str = boucle_str + str(element) + '\n'
-        return boucle_str
+	def __str__(self) -> str:
+		# TODO : sérialisation - transformation de self.chemins en string ICI
+		boucle_str = str()
+		for element in self.chemins:
+			boucle_str = boucle_str + str(element) + '\n'
+		return boucle_str
 
 
 class parcoursFinal:
@@ -622,10 +616,10 @@ class parcoursFinal:
 	def __init__(self) -> None:
 		self.boucles:list[boucle] = []
 
-    def __str__(self) -> str:
-        # TODO : sérialisation - transformation de self.boucles en string ICI
-        parcoursFinal_str = str()
-        for element in self.boucles:
-            parcoursFinal_str = parcoursFinal_str + str(element) + '\n'
-        return parcoursFinal_str
+	def __str__(self) -> str:
+		# TODO : sérialisation - transformation de self.boucles en string ICI
+		parcoursFinal_str = str()
+		for element in self.boucles:
+			parcoursFinal_str = parcoursFinal_str + str(element) + '\n'
+		return parcoursFinal_str
 
