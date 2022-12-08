@@ -93,8 +93,6 @@ class cadeau:
         # TODO : ici on peut eventuelleement penser a ajouter un poids a la distance dans la comparaison
         return self.poids < other.poids
 
-    def getPoidsduCadeau(self):
-        return self.poids
 
 class groupe:
     def __init__(self, positionX: int, positionY: int) -> None:
@@ -341,7 +339,7 @@ class boucle:
         # TODO : sérialisation - transformation de self.chemins en string ICI
         boucle_str = str()
         for element in self.chemins:
-            boucle_str = boucle_str + ' '.join(element) + '\n'
+            boucle_str = boucle_str + str(element) + '\n'
         return boucle_str
 
 
@@ -353,6 +351,6 @@ class parcoursFinal:
         # TODO : sérialisation - transformation de self.boucles en string ICI
         parcoursFinal_str = str()
         for element in self.boucles:
-            parcoursFinal_str = parcoursFinal_str + ' '.join(element) + '\n'
+            parcoursFinal_str = parcoursFinal_str + str(element) + '\n'
         return parcoursFinal_str
 

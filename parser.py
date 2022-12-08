@@ -27,6 +27,5 @@ def parseChallenge(filename):
             cadeaux.append(cadeau(ligne.split()[0], int(ligne.split()[2]), int(ligne.split()[1]), int(ligne.split()[3]),int(ligne.split()[4])))
 
     Accelerationcalculator = accelerationCalculator(weightsParAccel)
-    traineaux.append(traineau(reachRangeTraineau, Accelerationcalculator))
 
-    return Accelerationcalculator, cadeaux
+    return cadeaux, secondes, reachRangeTraineau, Accelerationcalculator
