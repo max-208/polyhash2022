@@ -324,11 +324,11 @@ class chemin:
     # TODO : parcours simple - calcul et création des instructions du chemin ici, possibilité d'utilise un objet Traineau
 
     def __str__(self) -> str:
-        with open('Submission_file.txt', 'w') as submission:
-            submission.write(f'{self.GetNbActions()}')
-            for listeditem in self.travelActions:
-                submission.write(listeditem + '\n')
-        pass
+        chemin_str = str()
+        for ligne in self.travelActions :
+            ligne[1] = str(ligne[1])
+            chemin_str = chemin_str + ' '.join(self.travelActions[ligne]) + '\n'
+        return chemin_str
 
 
 class boucle:
@@ -337,7 +337,10 @@ class boucle:
 
     def __str__(self) -> str:
         # TODO : sérialisation - transformation de self.chemins en string ICI
-        pass
+        boucle_str = str()
+        for element in self.chemins :
+            boucle_str = boucle_str + ' '.join(self.chemins[element]) + '\n'
+        return boucle_str
 
 
 class parcoursFinal:
@@ -346,7 +349,10 @@ class parcoursFinal:
 
     def __str__(self) -> str:
         # TODO : sérialisation - transformation de self.boucles en string ICI
-        pass
+        parcoursFinal_str = str()
+        for element in self.boucles :
+            parcoursFinal_str = parcoursFinal_str + ' '.join(self.boucles[element])
+        return parcoursFinal_str
 
 
 filename = "a_an_example.in.txt"
