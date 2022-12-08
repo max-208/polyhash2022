@@ -318,16 +318,16 @@ class chemin:
     # 	["LoadCarrots", 2],
     # 	["LoadGift", "Amine"]
     # ]
-    def GetNbActions(self)-> int :
+    def GetNbActionsParChemin(self) -> int:
         return len(self.travelActions)
 
     # TODO : parcours simple - calcul et création des instructions du chemin ici, possibilité d'utilise un objet Traineau
 
     def __str__(self) -> str:
         chemin_str = str()
-        for ligne in self.travelActions :
+        for ligne in self.travelActions:
             ligne[1] = str(ligne[1])
-            chemin_str = chemin_str + ' '.join(self.travelActions[ligne]) + '\n'
+            chemin_str = chemin_str + ' '.join(ligne) + '\n'
         return chemin_str
 
 
@@ -338,8 +338,8 @@ class boucle:
     def __str__(self) -> str:
         # TODO : sérialisation - transformation de self.chemins en string ICI
         boucle_str = str()
-        for element in self.chemins :
-            boucle_str = boucle_str + ' '.join(self.chemins[element]) + '\n'
+        for element in self.chemins:
+            boucle_str = boucle_str + ' '.join(element) + '\n'
         return boucle_str
 
 
@@ -350,31 +350,31 @@ class parcoursFinal:
     def __str__(self) -> str:
         # TODO : sérialisation - transformation de self.boucles en string ICI
         parcoursFinal_str = str()
-        for element in self.boucles :
-            parcoursFinal_str = parcoursFinal_str + ' '.join(self.boucles[element])
+        for element in self.boucles:
+            parcoursFinal_str = parcoursFinal_str + ' '.join(element) + '\n'
         return parcoursFinal_str
 
 
 filename = "a_an_example.in.txt"
 
-def read(filename: str):
-    with open(filename, 'r') as a_fichier:
-        contenu = a_fichier.readlines()
+with open(filename, 'r') as a_fichier:
+    contenu = a_fichier.readlines()
 
-    weightsParAccel = list()
+weightsParAccel = list()
 
-    for ligne in contenu:
-        if contenu.index(ligne) == 0:
-            secondes = int(ligne.split()[0])
-            traineau(int(ligne.split()[1]))
-            accel_range = int(ligne.split()[2])
-            nb_cadeaux = int(ligne.split()[3])
+for ligne in contenu:
+    if contenu.index(ligne) == 0:
+        secondes = int(ligne.split()[0])
+        traineau(int(ligne.split()[1]), accelerationCalculator)
+        accel_range = int(ligne.split()[2])
+        nb_cadeaux = int(ligne.split()[3])
 
-        elif 1 <= contenu.index(ligne) <= accel_range:
-            weightsParAccel[contenu.index(ligne) - 1] = [int(ligne.split()[0], int(ligne.split()[1]))]
+    elif 1 <= contenu.index(ligne) <= accel_range:
+        weightsParAccel.append([int(ligne.split()[0]), int(ligne.split()[1])])
 
-        elif accel_range < contenu.index(ligne) <= (accel_range + nb_cadeaux):
-            cadeau(ligne.split()[0], int(ligne.split()[1]), int(ligne.split()[2]), int(ligne.split()[3]),
-                   int(ligne.split()[4]))
+    elif accel_range < contenu.index(ligne) <= (accel_range + nb_cadeaux):
+        cadeau(ligne.split()[0], int(ligne.split()[1]), int(ligne.split()[2]), int(ligne.split()[3]),int(ligne.split()[4]))
 
-    accelerationCalculator(weightsParAccel)
+accelerationCalculator(weightsParAccel)
+
+
