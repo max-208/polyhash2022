@@ -346,6 +346,7 @@ class traineau:
 		self.nbCarottes = 0
 		self.cadeaux:list[cadeau] = []  #il est impératif de ne jamais modifier directement cette liste (voir traineau.chargerCadeau et traineau.livrerCadeau)
 		self.range = reachRange
+		self.poids = 0
 		self.rangeCalculator = rangeCalculator(reachRange)
 		self.accelerationCalculator = accelerationCalculator
 
@@ -418,6 +419,7 @@ class traineau:
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,0,0)):
 			if((self.nbCarottes + quantity) >= 0):
 				self.nbCarottes += quantity
+				self.poids += quantity
 				self.accelerationCalculator.updatePoids(self.getPoids())
 			else:
 				raise RuntimeWarning("il est impossible d'avoir une quantité négative de carottes'")
@@ -442,6 +444,7 @@ class traineau:
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,0,0)):
 			if(cadeau not in self.cadeaux):
 				self.cadeaux.append(cadeau)
+				self.poids += cadeau.poids
 				self.accelerationCalculator.updatePoids(self.getPoids())
 			else:
 				raise RuntimeWarning("un meme cadeau ne peut pas etre chargé deux fois dans le traineau")
@@ -466,6 +469,7 @@ class traineau:
 		if(self.rangeCalculator.isInRange(self.positionX,self.positionY,cadeau.positionX,cadeau.positionY)):
 			if(cadeau in self.cadeaux):
 				self.cadeaux.remove(cadeau)
+				self.poids += -cadeau.poids
 				self.accelerationCalculator.updatePoids(self.getPoids())
 				cadeau.delivre = True
 				#TODO : implémenter le score
@@ -520,7 +524,8 @@ class traineau:
 		Returns:
 			int: le poids chargé
 		"""
-		return sum([elem.poids for elem in self.cadeaux]) + self.nbCarottes
+		return self.poids
+		#return sum([elem.poids for elem in self.cadeaux]) + self.nbCarottes
 
 class chemin:
 	"""
