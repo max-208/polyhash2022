@@ -8,8 +8,8 @@ class accelerationCalculator:
 	classe permettant de déterminer l'accélération maximale a partir d'un profil d'accélération
 	"""
 
-	def __init__(self,ranges: list[list[int]]) -> None:
-		"""
+    def __init__(self, ranges: list[list[int]]) -> None:
+        """
 		Args:
 			ranges (list[list[int]]): liste contenant des listes de deux éléments, \n
 				le premier element est le poids maximal de ce profil d'accélération,\n
@@ -138,7 +138,7 @@ class groupe:
 		self.positionY = positionY
 		self.delivre = False
 		self.cadeaux:list[cadeau] = []  #il est impératif de ne jamais modifier directement cette liste (voir groupe.addCadeau et groupe.removeCadeau)
-	
+
 	def addCadeau(self, cadeau: cadeau) -> any:
 		"""
 		Insère un cadeau dans un groupe
@@ -440,7 +440,7 @@ class traineau:
 			self.positionX += self.vitesseX
 			self.positionY += self.vitesseY
 		return self
-			
+
 	def chargerCarotte(self,quantity: int) -> any:
 		"""
 		charge une ou plus carotte sur le pere noel
@@ -465,7 +465,7 @@ class traineau:
 		else:
 			raise RuntimeWarning("il est impossible de charger des carottes si l'on n'est pas a porté de (0,0)")
 		return self
-		
+
 	def chargerCadeau(self, cadeau: cadeau) -> any:
 		"""
 		charge un cadeau sur le traineau
@@ -555,7 +555,7 @@ class traineau:
 			raise RuntimeWarning("il faut se situer au coordonées exactes du groupe si l'on shouaite le livrer")
 		return self
 
-			
+
 	def getPoids(self) -> int:
 		"""
 		retourne le poids chargé sur le traineau
@@ -592,9 +592,13 @@ class chemin:
 
 		#TODO : parcours simple - calcul et création des instructions du chemin ici, possibilité d'utilise un objet Traineau
 
-	def __str__(self) -> str:
-		#TODO : sérialisation - transformation de self.TravelActions en string ICI
-		pass
+    def __str__(self) -> str:
+        chemin_str = str()
+        for ligne in self.travelActions:
+            ligne[1] = str(ligne[1])
+            chemin_str = chemin_str + ' '.join(ligne) + '\n'
+        return chemin_str
+
 
 class boucle:
 	"""
@@ -603,9 +607,13 @@ class boucle:
 	def __init__(self) -> None:
 		self.chemins:list[chemin] = []
 
-	def __str__(self) -> str:
-		#TODO : sérialisation - transformation de self.chemins en string ICI
-		pass
+    def __str__(self) -> str:
+        # TODO : sérialisation - transformation de self.chemins en string ICI
+        boucle_str = str()
+        for element in self.chemins:
+            boucle_str = boucle_str + str(element) + '\n'
+        return boucle_str
+
 
 class parcoursFinal:
 	"""
@@ -614,6 +622,10 @@ class parcoursFinal:
 	def __init__(self) -> None:
 		self.boucles:list[boucle] = []
 
-	def __str__(self) -> str:
-		#TODO : sérialisation - transformation de self.boucles en string ICI
-		pass
+    def __str__(self) -> str:
+        # TODO : sérialisation - transformation de self.boucles en string ICI
+        parcoursFinal_str = str()
+        for element in self.boucles:
+            parcoursFinal_str = parcoursFinal_str + str(element) + '\n'
+        return parcoursFinal_str
+
