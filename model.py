@@ -1,6 +1,7 @@
 from typing import Literal
 from scipy.spatial import distance
 import math
+from tkinter import *
 
 class accelerationCalculator():
 	"""
@@ -25,6 +26,7 @@ class accelerationCalculator():
 	def getMaxAcceleration(self,poids: int) -> int:
 		"""
 		Retourne l'accélération maximale possible pour un poids donné par rapport a un certain profil d'accélération
+from tkinter import *
 
 		Args:
 			poids (int): le poids du traineau pour lequel l'on doit calculer l'accélération maximale possible
@@ -39,7 +41,7 @@ class accelerationCalculator():
 
 class rangeCalculator:
 	"""
-	classe permettant de déterminer si une case est 
+	classe permettant de déterminer si une case est
 	"""
 
 	def __init__(self,reachRange: int) -> None:
@@ -50,9 +52,9 @@ class rangeCalculator:
 			for j in range(reachRange*2 + 1):
 				row.append((distance.euclidean([reachRange,reachRange],[i,j]) <= reachRange))
 			self.rangeMask.append(row)
-				
 
-		
+
+
 
 	def isInRange(self, originX : int, originY : int, targetX : int, targetY : int) -> bool:
 		"""
@@ -158,7 +160,7 @@ class region():
 					if(i-self.minX >= 0 and i-self.minX < self.range and j-self.minY >= 0 and j-self.minY < self.range ):
 						if(self.rangeCalculator.isInRange(cadeau.positionX,cadeau.positionY,i,j)):
 							ret[i-self.minX][j-self.minY].addCadeau(cadeau)
-		
+
 		return ret
 
 
@@ -195,11 +197,49 @@ class heatMap():
 				newMinY = minY + j * self.regionSize
 				row.append(region(self.regionSize,newMinX,newMinX + self.regionSize,newMinY, newMinY + self.regionSize, self.rangeCalculator ))
 			self.regions.append(row)
-		
+
 		# on y ajoutes les cadeaux
 		for cadeau in cadeaux:
 			self.regions[(cadeau.positionX-self.offsetX)//self.regionSize][(cadeau.positionY-self.offsetY)//self.regionSize].addCadeau(cadeau)
 
+	def display(self):
+		window = Tk()
+		width = len(self.regions)
+		height = len(self.regions[0])
+		map = Canvas(window, width=width*1000, height=height*1000)
+		map.pack()
+		rectangleSize = 10
+		rowIndex = 0
+		minPoids = self.regions[0][0].getPoids()
+		maxPoids = self.regions[0][0].getPoids()
+		data = []
+		for i in self.regions:
+			columnIndex = 0
+			for j in i:
+				poids = j.getPoids()
+				data.append((rowIndex, columnIndex, poids))
+				if poids > maxPoids:
+					maxPoids = poids
+				elif poids < minPoids:
+					minPoids = poids
+				columnIndex += rectangleSize
+			rowIndex += rectangleSize
+		dataSize = len(data)
+		for i in range(dataSize):
+			proportion = int((data[i].__getitem__(2)/(maxPoids-minPoids))*255)
+			color = "#%02x%02x%02x" % (255, 255-proportion, 0)
+			rowIndex = data[i].__getitem__(0)
+			columnIndex = data[i].__getitem__(1)
+			map.create_rectangle(rowIndex, columnIndex, rowIndex + rectangleSize + 1,columnIndex + rectangleSize + 1, fill=color, outline=color)
+		map.create_rectangle(-self.offsetX//self.regionSize, -self.offsetY//self.regionSize, -self.offsetX//self.regionSize + rectangleSize + 1, -self.offsetY//self.regionSize + rectangleSize + 1, fill='', outline='black')
+		mainloop()
+
+
+
+
+
+	def getGroupe(self,x,y) -> groupe:
+		return self.heatMap[x][y]
 
 class traineau:
 	def __init__(self,reachRange: int, accelerationCalculator: accelerationCalculator) -> None:
@@ -285,7 +325,8 @@ class traineau:
 				if(cadeau in self.cadeaux):
 					self.livrerCadeau(cadeau)
 		raise RuntimeWarning("il faut se situer au coordonées exactes du groupe si l'on shouaite le livrer")
-			
+
+
 	def getPoids(self) -> int:
 		return sum([elem.poids for elem in self.cadeaux]) + self.nbCarottes
 
