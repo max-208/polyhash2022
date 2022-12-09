@@ -22,6 +22,7 @@ class CheminSimple:
     santa: traineau
     delta_c: int
     delta_r: int
+    cinematic_vector: list[int, int, bool, int, int, int, int]
 
     def __init__(self, a: SantaPoint, b: SantaPoint, s: traineau):
         self.inicio = a
@@ -29,8 +30,6 @@ class CheminSimple:
         self.santa = s
         self.delta_c = b.x - a.x
         self.delta_r = b.y - a.y
-
-    def acc_max(self) -> list[int, int, bool, int, int, int, int]:
         u = [abs(self.delta_c), abs(self.delta_r)] / norm([self.delta_c, self.delta_r])
         a = [math.floor(abs(u[0] * 4)), math.floor(abs(u[1] * 4))]
         a2 = [0, 0, False, 0, 0, 0, 0]
@@ -63,44 +62,41 @@ class CheminSimple:
         a2[3] = abs(self.delta_c) % a2[0]
         a2[4] = abs(self.delta_r) % a2[1]
 
-        print("the max acceleration possible is : ", a, a2)
-        return a2
+        self.cinematic_vector = a2
 
     def acc_init(self):
-        cinematic_vector = self.acc_max()
         if self.delta_c >= 1:
             if self.delta_r >= 1:
-                self.santa.accelerer(cinematic_vector[0], "up")
+                self.santa.accelerer(self.cinematic_vector[0], "up")
                 self.santa.flotter(1)
-                self.santa.accelerer(cinematic_vector[0], "right")
+                self.santa.accelerer(self.cinematic_vector[0], "right")
 
             if self.delta_r <= -1:
-                self.santa.accelerer(cinematic_vector[0], "down")
+                self.santa.accelerer(self.cinematic_vector[0], "down")
                 self.santa.flotter(1)
-                self.santa.accelerer(cinematic_vector[0], "right")
+                self.santa.accelerer(self.cinematic_vector[0], "right")
 
             elif self.delta_r == 0:
-                self.santa.accelerer(cinematic_vector[0], "right")
-
+                self.santa.accelerer(self.cinematic_vector[0], "right")
         if self.delta_c <= -1:
             if self.delta_r >= 1:
-                self.santa.accelerer(cinematic_vector[1], "up")
+                self.santa.accelerer(self.cinematic_vector[1], "up")
                 self.santa.flotter(1)
-                self.santa.accelerer(cinematic_vector[1], "left")
+                self.santa.accelerer(self.cinematic_vector[1], "left")
 
             if self.delta_r <= -1:
-                self.santa.accelerer(cinematic_vector[1], "down")
+                self.santa.accelerer(self.cinematic_vector[1], "down")
                 self.santa.flotter(1)
-                self.santa.accelerer(cinematic_vector[1], "left")
+                self.santa.accelerer(self.cinematic_vector[1], "left")
 
             elif self.delta_r == 0:
-                self.santa.accelerer(cinematic_vector[1], "left")
+                self.santa.accelerer(self.cinematic_vector[1], "left")
 
         elif self.delta_c == 0 and self.delta_r >= 1:
-            self.santa.accelerer(cinematic_vector[0], "up")
+            self.santa.accelerer(self.cinematic_vector[0], "up")
 
         elif self.delta_c == 0 and self.delta_r <= -1:
-            self.santa.accelerer(cinematic_vector[1], "down")
+            self.santa.accelerer(self.cinematic_vector[1], "down")
 
     def stop_c(self):
         cinematic_vector = self.acc_max()
@@ -128,11 +124,10 @@ class CheminSimple:
         self.acc_init()
         self.tracker()
 
-        while self.santa.positionY != self.fin.y - cinematic_vector[0] - cinematic_vector[3]:
+        while self.santa.positionY != 2:
             self.tracker()
             self.santa.flotter(1)
         self.santa.flotter(1)
-        print("on va stop")
         self.stop_r()
         self.tracker()
         self.santa.flotter(1)
@@ -140,8 +135,8 @@ class CheminSimple:
         self.tracker()
 
 
-P1 = SantaPoint(0, 0)
-P2 = SantaPoint(60, 60)
+P2 = SantaPoint(0, 0)
+P1 = SantaPoint(60, 60)
 S1 = traineau(3)
 S1.chargerCarotte(10)
 C1 = CheminSimple(P1, P2, S1)
