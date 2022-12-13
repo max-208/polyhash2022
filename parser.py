@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from model import traineau, accelerationCalculator, cadeau
-
+import os
 
 def parseChallenge(filename):
     #filename = "a_an_example.in.txt"
-
+    filename = os.path.dirname(__file__) + "/" + filename
     with open(filename, 'r') as a_fichier:
         contenu = a_fichier.readlines()
 

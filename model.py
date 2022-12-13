@@ -273,8 +273,9 @@ class region():
 		for cadeau in self.cadeaux:
 			for i in range(cadeau.positionX - self.range, cadeau.positionX + self.range):
 				for j in range(cadeau.positionY - self.range, cadeau.positionY + self.range):
-					if(i-self.minX >= 0 and i-self.minX < self.range and j-self.minY >= 0 and j-self.minY < self.range ):
+					if(i-self.minX >= 0 and i-self.minX < self.maxX and j-self.minY >= 0 and j-self.minY < self.maxY ):
 						if(self.rangeCalculator.isInRange(cadeau.positionX,cadeau.positionY,i,j)):
+							print(self.width,i,j,i-self.minX,j-self.minY)
 							ret[i-self.minX][j-self.minY].addCadeau(cadeau)
 		
 		return ret
@@ -296,7 +297,6 @@ class heatMap:
 		self.regions:list[list[region]] = []
 		self.range = reachRange
 		self.rangeCalculator = rangeCalculator(reachRange)
-		self.regionSize = 100 # TODO: a fine tune, taille en cases d'un bloc "région"
 
 		# on détecte les limites
 		minX = math.inf
@@ -311,6 +311,8 @@ class heatMap:
 
 		width = maxX - minX
 		height = maxY - minY
+
+		self.regionSize = 10 + width//100 # TODO: a fine tune, taille en cases d'un bloc "région"
 
 		self.offsetX = minX
 		self.offsetY = minY
@@ -329,15 +331,15 @@ class heatMap:
 			self.regions[(cadeau.positionX-self.offsetX)//self.regionSize][(cadeau.positionY-self.offsetY)//self.regionSize].addCadeau(cadeau)
 
 	def display(self):
+		rectangleSize = 10
 		window = Tk()
 		width = len(self.regions)
 		height = len(self.regions[0])
-		map = Canvas(window, width=width*1000, height=height*1000)
+		map = Canvas(window, width=width*rectangleSize, height=height*rectangleSize)
 		map.pack()
-		rectangleSize = 10
 		rowIndex = 0
-		minPoids = self.regions[0][0].getPoids()
-		maxPoids = self.regions[0][0].getPoids()
+		minPoids = math.inf
+		maxPoids = -math.inf
 		data = []
 		for i in self.regions:
 			columnIndex = 0
@@ -353,11 +355,11 @@ class heatMap:
 		dataSize = len(data)
 		for i in range(dataSize):
 			proportion = int((data[i].__getitem__(2)/(maxPoids-minPoids))*255)
-			color = "#%02x%02x%02x" % (255, 255-proportion, 0)
+			color = "#%02x%02x%02x" % (255-proportion, 255-proportion, 255-proportion)
 			rowIndex = data[i].__getitem__(0)
 			columnIndex = data[i].__getitem__(1)
 			map.create_rectangle(rowIndex, columnIndex, rowIndex + rectangleSize + 1,columnIndex + rectangleSize + 1, fill=color, outline=color)
-		map.create_rectangle(-self.offsetX//self.regionSize, -self.offsetY//self.regionSize, -self.offsetX//self.regionSize + rectangleSize + 1, -self.offsetY//self.regionSize + rectangleSize + 1, fill='', outline='black')
+		map.create_rectangle(-self.offsetX//self.regionSize*rectangleSize, -self.offsetY//self.regionSize*rectangleSize, -self.offsetX//self.regionSize*rectangleSize + rectangleSize + 1, -self.offsetY//self.regionSize*rectangleSize + rectangleSize + 1, fill='', outline='red')
 		mainloop()
 
 
@@ -617,6 +619,11 @@ class parcoursFinal:
 		self.boucles:list[boucle] = []
 
 	def __str__(self) -> str:
+		"""_summary_
+
+		Returns:
+			str: _description_
+		"""
 		# TODO : sérialisation - transformation de self.boucles en string ICI
 		parcoursFinal_str = str()
 		for element in self.boucles:
