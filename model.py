@@ -331,15 +331,15 @@ class heatMap:
 			self.regions[(cadeau.positionX-self.offsetX)//self.regionSize][(cadeau.positionY-self.offsetY)//self.regionSize].addCadeau(cadeau)
 
 	def display(self):
+		rectangleSize = 10
 		window = Tk()
 		width = len(self.regions)
 		height = len(self.regions[0])
-		map = Canvas(window, width=width*1000, height=height*1000)
+		map = Canvas(window, width=width*rectangleSize, height=height*rectangleSize)
 		map.pack()
-		rectangleSize = 10
 		rowIndex = 0
-		minPoids = self.regions[0][0].getPoids()
-		maxPoids = self.regions[0][0].getPoids()
+		minPoids = math.inf
+		maxPoids = -math.inf
 		data = []
 		for i in self.regions:
 			columnIndex = 0
@@ -355,11 +355,11 @@ class heatMap:
 		dataSize = len(data)
 		for i in range(dataSize):
 			proportion = int((data[i].__getitem__(2)/(maxPoids-minPoids))*255)
-			color = "#%02x%02x%02x" % (255, 255-proportion, 0)
+			color = "#%02x%02x%02x" % (255-proportion, 255-proportion, 255-proportion)
 			rowIndex = data[i].__getitem__(0)
 			columnIndex = data[i].__getitem__(1)
 			map.create_rectangle(rowIndex, columnIndex, rowIndex + rectangleSize + 1,columnIndex + rectangleSize + 1, fill=color, outline=color)
-		map.create_rectangle(-self.offsetX//self.regionSize, -self.offsetY//self.regionSize, -self.offsetX//self.regionSize + rectangleSize + 1, -self.offsetY//self.regionSize + rectangleSize + 1, fill='', outline='black')
+		map.create_rectangle(-self.offsetX//self.regionSize*rectangleSize, -self.offsetY//self.regionSize*rectangleSize, -self.offsetX//self.regionSize*rectangleSize + rectangleSize + 1, -self.offsetY//self.regionSize*rectangleSize + rectangleSize + 1, fill='', outline='red')
 		mainloop()
 
 
