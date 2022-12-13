@@ -273,8 +273,9 @@ class region():
 		for cadeau in self.cadeaux:
 			for i in range(cadeau.positionX - self.range, cadeau.positionX + self.range):
 				for j in range(cadeau.positionY - self.range, cadeau.positionY + self.range):
-					if(i-self.minX >= 0 and i-self.minX < self.range and j-self.minY >= 0 and j-self.minY < self.range ):
+					if(i-self.minX >= 0 and i-self.minX < self.maxX and j-self.minY >= 0 and j-self.minY < self.maxY ):
 						if(self.rangeCalculator.isInRange(cadeau.positionX,cadeau.positionY,i,j)):
+							print(self.width,i,j,i-self.minX,j-self.minY)
 							ret[i-self.minX][j-self.minY].addCadeau(cadeau)
 		
 		return ret
@@ -296,7 +297,6 @@ class heatMap:
 		self.regions:list[list[region]] = []
 		self.range = reachRange
 		self.rangeCalculator = rangeCalculator(reachRange)
-		self.regionSize = 100 # TODO: a fine tune, taille en cases d'un bloc "région"
 
 		# on détecte les limites
 		minX = math.inf
@@ -311,6 +311,8 @@ class heatMap:
 
 		width = maxX - minX
 		height = maxY - minY
+
+		self.regionSize = 10 + width//100 # TODO: a fine tune, taille en cases d'un bloc "région"
 
 		self.offsetX = minX
 		self.offsetY = minY
@@ -617,6 +619,11 @@ class parcoursFinal:
 		self.boucles:list[boucle] = []
 
 	def __str__(self) -> str:
+		"""_summary_
+
+		Returns:
+			str: _description_
+		"""
 		# TODO : sérialisation - transformation de self.boucles en string ICI
 		parcoursFinal_str = str()
 		for element in self.boucles:
