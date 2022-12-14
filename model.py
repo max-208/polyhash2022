@@ -117,6 +117,9 @@ class cadeau:
 		self.delivre = False
 		self.enTransport = False
 
+	def __str__(self) -> str:
+		return "(" + self.nom + ", " + str(self.poids) + "kg, " + str(self.score) + "pts, <" + str(self.positionX) + "," + str(self.positionY) + ">, " + str(self.delivre) + ", " + str(self.delivre) +")"
+
 	def __lt__(self,other):
 		# ici je définis comment comparer deux tableau comme ça on pourra les trier par poids facilement avec .sort()
 		#TODO : ici on peut eventuelleement penser a ajouter un poids a la distance dans la comparaison
@@ -267,7 +270,7 @@ class region():
 		for x in range(self.width):
 			row = []
 			for y in range(self.width):
-				row.append(groupe(x,y))
+				row.append(groupe(x + self.minX,y + self.minY))
 			ret.append(row)
 
 		# on associes les cadeaux aux groupes
@@ -297,7 +300,6 @@ class heatMap:
 		self.regions:list[list[region]] = []
 		self.range = reachRange
 		self.rangeCalculator = rangeCalculator(reachRange)
-		self.regionSize = 100 # TODO: a fine tune, taille en cases d'un bloc "région"
 
 		# on détecte les limites
 		minX = math.inf
@@ -312,6 +314,8 @@ class heatMap:
 
 		width = maxX - minX
 		height = maxY - minY
+
+		self.regionSize = 10 + width//100 # TODO: a fine tune, taille en cases d'un bloc "région"
 
 		self.offsetX = minX
 		self.offsetY = minY
@@ -660,7 +664,7 @@ class chemin:
 		################################################################################################################
 
 	def tracker(self):
-		#print	(self.carotteConsommes, self.santa.positionX, self.santa.positionY)
+		print	(self.carotteConsommes, self.santa.positionX, self.santa.positionY)
 		pass
 	def move(self):
 		self.santa.ignoreCarottes = True
@@ -673,7 +677,7 @@ class chemin:
 
 		if self.quadrant == 'Mouvement diagonal':
 			################## MOVEMENT DIAGONAL ##########################@
-			##print	("Mouvement diagonal")
+			print	("Mouvement diagonal")
 			if self.cinematic_vector[2]:
 				self.set_c()
 				self.tracker()
@@ -696,7 +700,7 @@ class chemin:
 			self.tracker()
 			#print	("fin du mouvement")
 		if self.quadrant == 'Mouvement en L':
-			#print	("Mouvement L")
+			print	("Mouvement L")
 			# identifier le chemin court
 			Direction = self.cinematic_vector.index(min(self.cinematic_vector[5], self.cinematic_vector[6]), 2)
 
@@ -747,12 +751,9 @@ class chemin:
 				self.stop_c()
 				self.tracker()
 				#print	("fin du chemiiiin")
-			for cadeau in self.end.cadeaux:
-				if(not cadeau.delivre):
-					self.travelActions.append(["DeliverGift", cadeau.nom])
 		if self.quadrant == 'Trajectoire Unidirectional':
 			if self.delta_r == 0:
-				#print	("Mouvement uni en C")
+				print	("Mouvement uni en C")
 				#Le mouvement se fait que dans le sens c
 				if self.cinematic_vector[2]:
 					self.set_c()
@@ -775,6 +776,9 @@ class chemin:
 				self.stop_r()
 				self.tracker()
 				#print	("finfinfinfin")
+		for cadeau in self.end.cadeaux:
+			if(not cadeau.delivre):
+				self.travelActions.append(["DeliverGift", cadeau.nom])
 
 	def set_c(self): #function qui va régler le rattrapage dans la coordonée c
 		if self.delta_c >= 1:
@@ -808,7 +812,8 @@ class chemin:
 
 
 	def acc_c(self):
-		assert self.delta_c != 0
+		#assert self.delta_c != 0
+		self.tracker()
 		if self.delta_c > 1:
 			self.santa.accelerer(self.cinematic_vector[0], "right")
 			self.travelActions.append(["accRight",self.cinematic_vector[0]])
@@ -819,7 +824,8 @@ class chemin:
 			self.carotteConsommes += 1
 
 	def acc_r(self):
-		assert self.delta_r != 0
+		#assert self.delta_r != 0
+		self.tracker()
 		if self.delta_r > 1:
 			self.santa.accelerer(self.cinematic_vector[1], "up")
 			self.travelActions.append(["accUp",self.cinematic_vector[1]])
@@ -902,6 +908,6 @@ class parcoursFinal:
 		# TODO : sérialisation - transformation de self.boucles en string ICI
 		parcoursFinal_str = str()
 		for element in self.boucles:
-			parcoursFinal_str = parcoursFinal_str + '\n' + str(element)
+			parcoursFinal_str = parcoursFinal_str + str(element)
 		return parcoursFinal_str
 
