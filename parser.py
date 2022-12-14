@@ -29,3 +29,26 @@ def parseChallenge(filename):
     Accelerationcalculator = accelerationCalculator(weightsParAccel)
 
     return cadeaux, secondes, reachRangeTraineau, Accelerationcalculator
+
+def parseSolution(filename):
+    
+    filename = os.path.dirname(__file__) + "/" + filename
+    with open(filename, 'r') as a_fichier:
+        contenu = a_fichier.readlines()
+
+    actions = []
+    nbActions = 0
+    for ligne in contenu:
+        if contenu.index(ligne) == 0:
+            nbActions = int(ligne)
+        else:
+            action = ligne.split()[0]
+            valeur = ligne.split()[1]
+            if(action not in ["LoadGift","DeliverGift"]):
+                valeur = int(valeur)
+            actions.append([action,valeur])
+
+    if(nbActions != len(actions)):
+        raise RuntimeWarning("non concordance entre le nombre indiqué et effectif d'actions")
+        
+    return actions
