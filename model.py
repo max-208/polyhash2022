@@ -609,7 +609,7 @@ class chemin:
 
 		a2 = [0, 0, False, 0, 0, 0, 0, False]
 		if a[0] > abs(self.delta_c):
-			a2[0] = self.delta_c
+			a2[0] = abs(self.delta_c)
 			a2[2] = False
 			a2[5] = 1
 		elif self.delta_c == 0:
@@ -627,7 +627,7 @@ class chemin:
 			a2[3] = abs(self.delta_c) % a2[0]
 
 		if a[1] > abs(self.delta_r):
-			a2[1] = self.delta_r
+			a2[1] = abs(self.delta_r)
 			a2[7] = False
 			a2[6] = 1
 		elif self.delta_r == 0:
@@ -650,19 +650,17 @@ class chemin:
 
 		if self.cinematic_vector[5] == self.cinematic_vector[6] and self.cinematic_vector[5] != 0 and \
 				self.cinematic_vector[6] != 0:
-			self.cuadrante = 'Mouvement diagonal'
+			self.quadrant = 'Mouvement diagonal'
+		elif self.delta_c == 0 or self.delta_r == 0:
+			self.quadrant = 'Trajectoire Unidirectional'
 		else:
-			self.cuadrante = 'Mouvement en L'
-		# elif self.cinematic_vector[5] == 0 or self.cinematic_vector[6] == 0:
-		#	 self.cuadrante = 'Trajectoire Unidirectional'
-		#
-		# else:
-		#	 self.cuadrante = 'Mouvement Mixte'
+			self.quadrant = 'Mouvement en L'
+
 		################################################################################################################
 
 	def tracker(self):
 
-		print(self.santa.getPoids(), self.santa.positionX, self.santa.positionY)
+		print(self.carotteConsommes, self.santa.positionX, self.santa.positionY)
 	def move(self):
 		self.santa.ignoreCarottes = True
 		self.travelActions = []
@@ -671,8 +669,7 @@ class chemin:
 		self.santa.positionY = self.begining.positionY
 		self.tracker()
 		print("The required mouvement is->")
-
-		if self.cuadrante == 'Mouvement diagonal':
+		if self.quadrant == 'Mouvement diagonal':
 			################## MOVEMENT DIAGONAL ##########################@
 			print("Mouvement diagonal")
 			if self.cinematic_vector[2]:
@@ -693,7 +690,7 @@ class chemin:
 			self.stop_r()
 			self.tracker()
 			print("fin du mouvement")
-		if self.cuadrante == 'Mouvement en L':
+		if self.quadrant == 'Mouvement en L':
 			print("Mouvement L")
 			# identifier le chemin court
 			Direction = self.cinematic_vector.index(min(self.cinematic_vector[5], self.cinematic_vector[6]), 2)
@@ -743,7 +740,27 @@ class chemin:
 			for cadeau in self.end.cadeaux:
 				if(not cadeau.delivre):
 					self.travelActions.append("DeliverGift", cadeau.nom)
-
+		if self.quadrant == 'Trajectoire Unidirectional':
+			if self.delta_r == 0:
+				print("Mouvement uni en C")
+				#Le mouvement se fait que dans le sens c
+				if self.cinematic_vector[2]:
+					self.set_c()
+				self.tracker()
+				self.acc_c()
+				self.santa.flotter(self.cinematic_vector[5])
+				self.stop_c()
+				self.tracker()
+			if self.delta_c == 0:
+				print("Mouvement uni en R")
+				if self.cinematic_vector[7]:
+					self.set_r()
+				self.tracker()
+				self.acc_r()
+				self.santa.flotter(self.cinematic_vector[6])
+				self.stop_r()
+				self.tracker()
+				print("finfinfinfin")
 
 	def set_c(self): #function qui va régler le rattrapage dans la coordonée c
 		if self.delta_c >= 1:
@@ -765,7 +782,7 @@ class chemin:
 			self.santa.flotter(1)
 			self.santa.accelerer(self.cinematic_vector[4], "down")
 			self.travelActions.extend([["accUp",self.cinematic_vector[4]],["float",1],["accDown",self.cinematic_vector[4]],["float",1]])
-		elif self.delta_c <= -1:
+		elif self.delta_r <= -1:
 			self.santa.accelerer(self.cinematic_vector[4], "down")
 			self.santa.flotter(1)
 			self.santa.accelerer(self.cinematic_vector[4], "up")
