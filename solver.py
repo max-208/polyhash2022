@@ -32,10 +32,10 @@ class CheminSimple:
         self.delta_c = b.x - a.x
         self.delta_r = b.y - a.y
         u = [abs(self.delta_c), abs(self.delta_r)] / norm([self.delta_c, self.delta_r])
-        a = [math.floor(abs(u[0] * self.santa.accelerationUpperBound)) if abs(
-            u[0] * self.santa.accelerationUpperBound) >= 1 else 1,
-             math.floor(abs(u[1] * self.santa.accelerationUpperBound)) if abs(
-                 u[1] * self.santa.accelerationUpperBound) >= 1 else 1]
+        a = [math.floor(abs(u[0] * self.santa.accelerationCalculator.getMaxAcceleration())) if abs(
+            u[0] * self.santa.accelerationCalculator.getMaxAcceleration()) >= 1 else 1,
+             math.floor(abs(u[1] * self.santa.accelerationCalculator.getMaxAcceleration())) if abs(
+                 u[1] * self.santa.accelerationCalculator.getMaxAcceleration()) >= 1 else 1]
 
         #################################### DEFINITION VERCTOR CINEMATIQUE ##########################################
         # vector cinematique :
