@@ -649,20 +649,18 @@ class chemin:
 		# On va definit 8 situations differents pour encadrer la navegation de santa
 		# l'idee c'est de adapter les action de santa au fur et mesure de la position relative du point de destination
 
-		#if self.cinematic_vector[5] == self.cinematic_vector[6] and self.cinematic_vector[5] != 0 and \
-		#		self.cinematic_vector[6] != 0:
-		#	self.cuadrante = 'Mouvement diagonal'
-		#else:
-		self.cuadrante = 'Mouvement en L'
-		# elif self.cinematic_vector[5] == 0 or self.cinematic_vector[6] == 0:
-		#	 self.cuadrante = 'Trajectoire Unidirectional'
-		#
-		# else:
-		#	 self.cuadrante = 'Mouvement Mixte'
+		if self.cinematic_vector[5] == self.cinematic_vector[6] and self.cinematic_vector[5] > 1 and \
+				self.cinematic_vector[6] > 1:
+			self.quadrant = 'Mouvement diagonal'
+		elif self.delta_c == 0 or self.delta_r == 0:
+			self.quadrant = 'Trajectoire Unidirectional'
+		else:
+			self.quadrant = 'Mouvement en L'
+
 		################################################################################################################
 
 	def tracker(self):
-		#print(self.santa.getPoids(), self.santa.positionX, self.santa.positionY)
+		#print	(self.carotteConsommes, self.santa.positionX, self.santa.positionY)
 		pass
 	def move(self):
 		self.santa.ignoreCarottes = True
@@ -671,11 +669,11 @@ class chemin:
 		self.santa.positionX = self.begining.positionX
 		self.santa.positionY = self.begining.positionY
 		self.tracker()
-		#print("The required mouvement is->")
+		##print	("The required mouvement is->")
 
-		if self.cuadrante == 'Mouvement diagonal':
+		if self.quadrant == 'Mouvement diagonal':
 			################## MOVEMENT DIAGONAL ##########################@
-			#print("Mouvement diagonal")
+			##print	("Mouvement diagonal")
 			if self.cinematic_vector[2]:
 				self.set_c()
 				self.tracker()
@@ -696,9 +694,9 @@ class chemin:
 			self.tempsConsomme += 1
 			self.stop_r()
 			self.tracker()
-			#print("fin du mouvement")
-		if self.cuadrante == 'Mouvement en L':
-			#print("Mouvement L")
+			#print	("fin du mouvement")
+		if self.quadrant == 'Mouvement en L':
+			#print	("Mouvement L")
 			# identifier le chemin court
 			Direction = self.cinematic_vector.index(min(self.cinematic_vector[5], self.cinematic_vector[6]), 2)
 
@@ -724,7 +722,7 @@ class chemin:
 				self.tracker()
 				self.stop_r()
 				self.tracker()
-				#print("fin du chemin")
+				##print	("fin du chemin")
 			elif Direction == 6:  # le mouvement demarre en r
 				if self.cinematic_vector[7]:
 					self.set_r()
@@ -737,6 +735,7 @@ class chemin:
 				# on continue sur l'axis c
 				self.santa.flotter(1)
 				self.travelActions.append(["float",1])
+				self.tempsConsomme += 1
 				if self.cinematic_vector[2]:
 					self.set_c()
 				self.tracker()
@@ -747,11 +746,35 @@ class chemin:
 				self.tracker()
 				self.stop_c()
 				self.tracker()
-				#print("fin du chemiiiin")
+				#print	("fin du chemiiiin")
 			for cadeau in self.end.cadeaux:
 				if(not cadeau.delivre):
 					self.travelActions.append(["DeliverGift", cadeau.nom])
-
+		if self.quadrant == 'Trajectoire Unidirectional':
+			if self.delta_r == 0:
+				#print	("Mouvement uni en C")
+				#Le mouvement se fait que dans le sens c
+				if self.cinematic_vector[2]:
+					self.set_c()
+				self.tracker()
+				self.acc_c()
+				self.santa.flotter(self.cinematic_vector[5])
+				self.travelActions.append(["float",self.cinematic_vector[5]])
+				self.tempsConsomme += self.cinematic_vector[5]
+				self.stop_c()
+				self.tracker()
+			if self.delta_c == 0:
+				#print	("Mouvement uni en R")
+				if self.cinematic_vector[7]:
+					self.set_r()
+				self.tracker()
+				self.acc_r()
+				self.santa.flotter(self.cinematic_vector[6])
+				self.travelActions.append(["float",self.cinematic_vector[6]])
+				self.tempsConsomme += self.cinematic_vector[6]
+				self.stop_r()
+				self.tracker()
+				#print	("finfinfinfin")
 
 	def set_c(self): #function qui va régler le rattrapage dans la coordonée c
 		if self.delta_c >= 1:
@@ -774,7 +797,7 @@ class chemin:
 			self.santa.flotter(1)
 			self.santa.accelerer(self.cinematic_vector[4], "down")
 			self.travelActions.extend([["accUp",self.cinematic_vector[4]],["float",1],["accDown",self.cinematic_vector[4]],["float",1]])
-		elif self.delta_c <= -1:
+		elif self.delta_r <= -1:
 			self.santa.accelerer(self.cinematic_vector[4], "down")
 			self.santa.flotter(1)
 			self.santa.accelerer(self.cinematic_vector[4], "up")

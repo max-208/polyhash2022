@@ -11,7 +11,7 @@ sys.path.insert(0, parentdir)
 from model import cadeau,groupe, heatMap, chemin, boucle, parcoursFinal,traineau
 import parser
 
-(cadeaux, secondes, reachRange, Accelerationcalculator) = parser.parseChallenge("d_decorated_houses.in.txt")
+(cadeaux, secondes, reachRange, Accelerationcalculator) = parser.parseChallenge("a_an_example.in.txt")
 
 heatmap = heatMap(reachRange,cadeaux)
 parcoursFinal = parcoursFinal()
@@ -58,11 +58,11 @@ while secondes > 0:
 			bcl.loadingActions.append(["LoadGift",cadeau.nom])
 			cadeau.delivre = True
 
-	print("---")
-	print(str(bcl))
+	print("---",secondes)
+	#print(str(bcl))
 	if(secondes - bcl.getTempsConsomme() >= 0):
 		parcoursFinal.boucles.append(bcl)
-		
+	secondes = secondes - bcl.getTempsConsomme()
 
 print("----------------")
 print(str(parcoursFinal))
