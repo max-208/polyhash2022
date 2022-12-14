@@ -317,7 +317,7 @@ class heatMap:
 		height = maxY - minY
 
 		self.regionSize = 10 + width//100 # TODO: a fine tune, taille en cases d'un bloc "région"
-		
+
 		self.offsetX = minX
 		self.offsetY = minY
 
@@ -575,12 +575,13 @@ class chemin:
 	classe représentant un chemin, un chemin est une suite d'actions représentant un mouvement
 	"""
 	def __init__(self,begining: groupe, end: groupe, santa: traineau = None) -> None:
-		"""
-
+		'''
+		constructor
 		Args:
-			begining (groupe): groupe de début du chemin
-			end (groupe): groupe de fin du chemin
-		"""
+			begining (): Point de depart
+			end (): point destination
+			santa (): Class traineau, notre santa qui va performer les actions
+		'''
 		self.begining = begining
 		self.end = end
 		self.travelActions:list[list[str|int]] = []
@@ -595,6 +596,10 @@ class chemin:
 		# ]
 		self.santa: traineau = santa
 		self.carotteConsommes = 0
+		#Distance relative entre le point initial et le point destination
+		self.delta_c: int = end.positionX - begining.positionX 		#delta_c corresponds à la distance relative en C
+		self.delta_r: int = end.positionY - begining.positionY		#delta_r corresponds à la distance relative en R
+		#
 		self.tempsConsomme = 0
 		self.delta_c: int = end.positionX - begining.positionX
 		self.delta_r: int = end.positionY - begining.positionY
@@ -813,9 +818,9 @@ class chemin:
 
 
 	def acc_c(self):
-		#assert self.delta_c != 0
+		assert self.delta_c != 0
 		self.tracker()
-		if self.delta_c > 1:
+		if self.delta_c >= 1:
 			self.santa.accelerer(self.cinematic_vector[0], "right")
 			self.travelActions.append(["accRight",self.cinematic_vector[0]])
 			self.carotteConsommes += 1
@@ -825,9 +830,8 @@ class chemin:
 			self.carotteConsommes += 1
 
 	def acc_r(self):
-		#assert self.delta_r != 0
-		self.tracker()
-		if self.delta_r > 1:
+		assert self.delta_r != 0
+		if self.delta_r >= 1:
 			self.santa.accelerer(self.cinematic_vector[1], "up")
 			self.travelActions.append(["accUp",self.cinematic_vector[1]])
 			self.carotteConsommes += 1
@@ -886,7 +890,7 @@ class boucle:
 		for chemin in self.chemins:
 			ret += chemin.tempsConsomme
 		return ret
-		
+
 	def __str__(self) -> str:
 		# TODO : sérialisation - transformation de self.chemins en string ICI
 		boucle_str = str()
