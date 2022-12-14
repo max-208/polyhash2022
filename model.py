@@ -271,9 +271,9 @@ class region():
 
 		# on associes les cadeaux aux groupes
 		for cadeau in self.cadeaux:
-			for i in range(cadeau.positionX - self.range, cadeau.positionX + self.range):
-				for j in range(cadeau.positionY - self.range, cadeau.positionY + self.range):
-					if(i-self.minX >= 0 and i-self.minX < self.range and j-self.minY >= 0 and j-self.minY < self.range ):
+			for i in range(cadeau.positionX - self.range, cadeau.positionX + self.range +1):
+				for j in range(cadeau.positionY - self.range, cadeau.positionY + self.range+1):
+					if(i-self.minX >= 0 and i-self.minX < self.width and j-self.minY >= 0 and j-self.minY < self.width ):
 						if(self.rangeCalculator.isInRange(cadeau.positionX,cadeau.positionY,i,j)):
 							ret[i-self.minX][j-self.minY].addCadeau(cadeau)
 		
