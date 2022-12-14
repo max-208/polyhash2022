@@ -8,8 +8,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 
-from model import cadeau, heatMap
-from solver import 
+from model import cadeau,groupe, heatMap, chemin, boucle, parcoursFinal,traineau
 import parser
 
 (cadeaux, secondes, reachRange, Accelerationcalculator) = parser.parseChallenge("d_decorated_houses.in.txt")
@@ -53,3 +52,16 @@ for row in groups:
 		print("#" if val > 0 else " ", end="")
 	print("")
 
+cheminAller = chemin(groupe(0,0),maxGroup,traineau(reachRange,Accelerationcalculator))
+cheminAller.move()
+cheminRetour = chemin(maxGroup,groupe(0,0),traineau(reachRange,Accelerationcalculator))
+cheminAller.move()
+
+boucle = boucle()
+boucle.chemins = [cheminAller,cheminRetour]
+boucle.loadingActions = [["LoadCarrots",cheminAller.carotteConsommes + cheminRetour.carotteConsommes]]
+for cadeau in maxGroup.cadeaux:
+	if(not cadeau.delivre):
+		boucle.loadingActions.append(["LoadGift",cadeau.nom])
+
+print(str(boucle))

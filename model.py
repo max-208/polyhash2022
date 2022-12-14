@@ -383,6 +383,7 @@ class traineau:
 		self.poids = 0
 		self.rangeCalculator = rangeCalculator(reachRange)
 		self.accelerationCalculator = accelerationCalculator
+		self.ignoreCarottes = False
 
 	def accelerer(self,quantity : int, direction : Literal["up","down","left","right"]) -> any:
 		"""
@@ -403,7 +404,7 @@ class traineau:
 		#TODO : integrer la verification de l'acceleration max par raport au chargement des cadeaux
 		if(quantity <= self.accelerationCalculator.getMaxAcceleration()):
 			if(quantity >= 0):
-				if(self.nbCarottes > 0):
+				if(self.nbCarottes > 0 or self.ignoreCarottes):
 					if(direction == "up"):
 						self.vitesseY += quantity
 					elif(direction == "down"):
@@ -412,7 +413,8 @@ class traineau:
 						self.vitesseX += -quantity
 					elif(direction == "right"):
 						self.vitesseX += quantity
-					self.nbCarottes += -1
+					if(not self.ignoreCarottes):
+						self.nbCarottes += -1
 				else:
 					raise RuntimeWarning("il est impossible d'effectuer une acceleration sans carottes")
 			else:
@@ -431,6 +433,8 @@ class traineau:
 		Returns:
 			traineau: soi-meme
 		"""
+		if(duration <= 0):
+			raise RuntimeWarning("impossible d'effectuer un float de durée 0 ou négative")
 		for i in range(duration):
 			self.positionX += self.vitesseX
 			self.positionY += self.vitesseY
@@ -585,6 +589,7 @@ class chemin:
 		# 	["LoadGift", "Amine"]
 		# ]
 		self.santa: traineau = santa
+		self.carotteConsommes = 0
 		self.delta_c: int = end.positionX - begining.positionX
 		self.delta_r: int = end.positionY - begining.positionY
 		u = [abs(self.delta_c), abs(self.delta_r)] / norm([self.delta_c, self.delta_r])
@@ -659,7 +664,8 @@ class chemin:
 
 		print(self.santa.getPoids(), self.santa.positionX, self.santa.positionY)
 	def move(self):
-		assert self.santa.nbCarottes >= 6
+		self.santa.ignoreCarottes = True
+		self.travelActions = []
 
 		self.santa.positionX = self.begining.positionX
 		self.santa.positionY = self.begining.positionY
@@ -698,14 +704,17 @@ class chemin:
 				self.tracker()
 				self.acc_c()
 				self.santa.flotter(self.cinematic_vector[5])
+				self.travelActions.append(["float",self.cinematic_vector[5]])
 				self.stop_c()
 				# Après on continue sur l'axis r
 				self.santa.flotter(1)
+				self.travelActions.append(["float",1])
 				if self.cinematic_vector[7]:
 					self.set_r()
 				self.tracker()
 				self.acc_r()
 				self.santa.flotter(self.cinematic_vector[6])
+				self.travelActions.append(["float",self.cinematic_vector[6]])
 				self.tracker()
 				self.stop_r()
 				self.tracker()
@@ -716,87 +725,98 @@ class chemin:
 				self.tracker()
 				self.acc_r()
 				self.santa.flotter(self.cinematic_vector[6])
+				self.travelActions.append(["float",self.cinematic_vector[6]])
 				self.stop_r()
 				# on continue sur l'axis c
 				self.santa.flotter(1)
+				self.travelActions.append(["float",1])
 				if self.cinematic_vector[2]:
 					self.set_c()
 				self.tracker()
 				self.acc_c()
 				self.santa.flotter(self.cinematic_vector[5])
+				self.travelActions.append(["float",self.cinematic_vector[5]])
 				self.tracker()
 				self.stop_c()
 				self.tracker()
 				print("fin du chemiiiin")
+			for cadeau in self.end.cadeaux:
+				if(not cadeau.delivre):
+					self.travelActions.append("DeliverGift", cadeau.nom)
+
 
 	def set_c(self): #function qui va régler le rattrapage dans la coordonée c
 		if self.delta_c >= 1:
 			self.santa.accelerer(self.cinematic_vector[3], "right")
 			self.santa.flotter(1)
 			self.santa.accelerer(self.cinematic_vector[3], "left")
-			self.santa.flotter(1)
 			self.travelActions.extend([["accRight",self.cinematic_vector[3]],["float",1],["accLeft",self.cinematic_vector[3]],["float",1]])
 		elif self.delta_c <= -1:
 			self.santa.accelerer(self.cinematic_vector[3], "left")
 			self.santa.flotter(1)
 			self.santa.accelerer(self.cinematic_vector[3], "right")
-			self.santa.flotter(1)
 			self.travelActions.extend([["accLeft",self.cinematic_vector[3]],["float",1],["accRight",self.cinematic_vector[3]],["float",1]])
 		self.santa.flotter(1)
+		self.carotteConsommes += 2
 
 	def set_r(self): #function qui va régler le rattrapage dans la coordonée r
 		if self.delta_r >= 1:
 			self.santa.accelerer(self.cinematic_vector[4], "up")
 			self.santa.flotter(1)
 			self.santa.accelerer(self.cinematic_vector[4], "down")
-			self.santa.flotter(1)
 			self.travelActions.extend([["accUp",self.cinematic_vector[4]],["float",1],["accDown",self.cinematic_vector[4]],["float",1]])
 		elif self.delta_c <= -1:
 			self.santa.accelerer(self.cinematic_vector[4], "down")
 			self.santa.flotter(1)
 			self.santa.accelerer(self.cinematic_vector[4], "up")
-			self.santa.flotter(1)
 			self.travelActions.extend([["accUp",self.cinematic_vector[4]],["float",1],["accDown",self.cinematic_vector[4]],["float",1]])
 		self.santa.flotter(1)
+		self.carotteConsommes += 2
 
 
 	def acc_c(self):
 		assert self.delta_c != 0
-		assert self.santa.nbCarottes > 6
 		if self.delta_c > 1:
 			self.santa.accelerer(self.cinematic_vector[0], "right")
 			self.travelActions.append(["accRight",self.cinematic_vector[0]])
+			self.carotteConsommes += 1
 		else:
 			self.santa.accelerer(self.cinematic_vector[0], "left")
 			self.travelActions.append(["accLeft",self.cinematic_vector[0]])
+			self.carotteConsommes += 1
 
 	def acc_r(self):
 		assert self.delta_r != 0
-		assert self.santa.nbCarottes > 6
 		if self.delta_r > 1:
 			self.santa.accelerer(self.cinematic_vector[1], "up")
 			self.travelActions.append(["accUp",self.cinematic_vector[1]])
+			self.carotteConsommes += 1
 		else:
 			self.santa.accelerer(self.cinematic_vector[1], "down")
 			self.travelActions.append(["accDown",self.cinematic_vector[1]])
+			self.carotteConsommes += 1
 
 	def stop_c(self):
 		self.tracker()
 		if self.delta_c >= 1:
 			self.santa.accelerer(self.cinematic_vector[0], "left")
 			self.travelActions.append(["accLeft",self.cinematic_vector[0]])
+			self.carotteConsommes += 1
 		if self.delta_c <= -1:
 			self.santa.accelerer(self.cinematic_vector[0], "right")
 			self.travelActions.append(["accRight",self.cinematic_vector[0]])
+			self.carotteConsommes += 1
 
 	def stop_r(self):
 		self.tracker()
 		if self.delta_r >= 1:
 			self.santa.accelerer(self.cinematic_vector[1], "down")
 			self.travelActions.append(["accDown",self.cinematic_vector[1]])
+			self.carotteConsommes += 1
 		if self.delta_r <= -1:
 			self.santa.accelerer(self.cinematic_vector[1], "up")
 			self.travelActions.append(["accUp",self.cinematic_vector[1]])
+			self.carotteConsommes += 1
 
 	def __str__(self) -> str:
 		chemin_str = str()
@@ -812,11 +832,15 @@ class boucle:
 	classe représentant une boucle, soit un ensemble de chemins revenant au meme point d'origine
 	"""
 	def __init__(self) -> None:
+		self.loadingActions:list[list[str|int]] = []
 		self.chemins:list[chemin] = []
 
 	def __str__(self) -> str:
 		# TODO : sérialisation - transformation de self.chemins en string ICI
 		boucle_str = str()
+		for ligne in self.loadingActions:
+			ligne[1] = str(ligne[1])
+			boucle_str = boucle_str + ' '.join(ligne) + '\n'
 		for element in self.chemins:
 			boucle_str = boucle_str + str(element) + '\n'
 		return boucle_str
