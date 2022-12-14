@@ -14,54 +14,55 @@ import parser
 (cadeaux, secondes, reachRange, Accelerationcalculator) = parser.parseChallenge("d_decorated_houses.in.txt")
 
 heatmap = heatMap(reachRange,cadeaux)
+parcoursFinal = parcoursFinal()
+while secondes > 0:
 
-# on détermine la valeur de chaque région
-# on prend la région avec la plus grande valeur
+	# on détermine la valeur de chaque région
+	# on prend la région avec la plus grande valeur
+	value = []
+	maxVal = -math.inf
+	maxRegion = None
+	for row in heatmap.regions:
+		newRow = []
+		for region in row:
+			#TODO : raffiner l'algo de décision
+			val = region.getPoids() * -2 + region.getScore()*3 -(distance.euclidean([0,0],[(region.maxX + region.minX) / 2, (region.maxY + region.minY) / 2 ] )//15)** 2
+			if(val > maxVal):
+				maxVal = val
+				maxRegion = region
+			newRow.append( [val,region] )
 
-value = []
-maxVal = -math.inf
-maxRegion = None
-for row in heatmap.regions:
-	newRow = []
-	for region in row:
-		#TODO : raffiner l'algo de décision
-		val = region.getPoids() * -2 + region.getScore()*3 -(distance.euclidean([0,0],[(region.maxX + region.minX) / 2, (region.maxY + region.minY) / 2 ] )//15)** 2
-		if(val > maxVal):
-			maxVal = val
-			maxRegion = region
-		newRow.append( [val,region] )
-		print("##" if val > 0 else "  ", end="")
+		value.append(newRow)
+	# pour cette région on prend le meilleur point
 
-	value.append(newRow)
-	print("")
+	maxVal = -math.inf
+	maxGroup = None
+	groups = maxRegion.getGroups()
+	for row in groups:
+		for group in row:
+			val = group.getScore()*2 - group.getPoids()
+			if(val > maxVal):
+				maxVal = val
+				maxGroup = group
 
-print(maxVal)
-# pour cette région on prend le meilleur point
+	cheminAller = chemin(groupe(0,0),maxGroup,traineau(reachRange,Accelerationcalculator))
+	cheminAller.move()
+	cheminRetour = chemin(maxGroup,groupe(0,0),traineau(reachRange,Accelerationcalculator))
+	cheminRetour.move()
 
-print("--------------------------------------------------------------------------")
+	bcl = boucle()
+	bcl.chemins = [cheminAller,cheminRetour]
+	bcl.loadingActions = [["LoadCarrots",bcl.getCarotteConsommes()]]
+	for cadeau in maxGroup.cadeaux:
+		if(not cadeau.delivre):
+			bcl.loadingActions.append(["LoadGift",cadeau.nom])
+			cadeau.delivre = True
 
-maxVal = -math.inf
-maxGroup = None
-groups = maxRegion.getGroups()
-for row in groups:
-	for group in row:
-		val = group.getScore()*2 - group.getPoids()
-		if(val > maxVal):
-			maxVal = val
-			maxGroup = group
-		print("#" if val > 0 else " ", end="")
-	print("")
+	print("---")
+	print(str(bcl))
+	if(secondes - bcl.getTempsConsomme() >= 0):
+		parcoursFinal.boucles.append(bcl)
+		
 
-cheminAller = chemin(groupe(0,0),maxGroup,traineau(reachRange,Accelerationcalculator))
-cheminAller.move()
-cheminRetour = chemin(maxGroup,groupe(0,0),traineau(reachRange,Accelerationcalculator))
-cheminAller.move()
-
-boucle = boucle()
-boucle.chemins = [cheminAller,cheminRetour]
-boucle.loadingActions = [["LoadCarrots",cheminAller.carotteConsommes + cheminRetour.carotteConsommes]]
-for cadeau in maxGroup.cadeaux:
-	if(not cadeau.delivre):
-		boucle.loadingActions.append(["LoadGift",cadeau.nom])
-
-print(str(boucle))
+print("----------------")
+print(str(parcoursFinal))

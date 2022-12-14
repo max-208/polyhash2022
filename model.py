@@ -590,6 +590,7 @@ class chemin:
 		# ]
 		self.santa: traineau = santa
 		self.carotteConsommes = 0
+		self.tempsConsomme = 0
 		self.delta_c: int = end.positionX - begining.positionX
 		self.delta_r: int = end.positionY - begining.positionY
 		u = [abs(self.delta_c), abs(self.delta_r)] / norm([self.delta_c, self.delta_r])
@@ -609,7 +610,7 @@ class chemin:
 
 		a2 = [0, 0, False, 0, 0, 0, 0, False]
 		if a[0] > abs(self.delta_c):
-			a2[0] = self.delta_c
+			a2[0] = abs(self.delta_c)
 			a2[2] = False
 			a2[5] = 1
 		elif self.delta_c == 0:
@@ -627,7 +628,7 @@ class chemin:
 			a2[3] = abs(self.delta_c) % a2[0]
 
 		if a[1] > abs(self.delta_r):
-			a2[1] = self.delta_r
+			a2[1] = abs(self.delta_r)
 			a2[7] = False
 			a2[6] = 1
 		elif self.delta_r == 0:
@@ -648,11 +649,11 @@ class chemin:
 		# On va definit 8 situations differents pour encadrer la navegation de santa
 		# l'idee c'est de adapter les action de santa au fur et mesure de la position relative du point de destination
 
-		if self.cinematic_vector[5] == self.cinematic_vector[6] and self.cinematic_vector[5] != 0 and \
-				self.cinematic_vector[6] != 0:
-			self.cuadrante = 'Mouvement diagonal'
-		else:
-			self.cuadrante = 'Mouvement en L'
+		#if self.cinematic_vector[5] == self.cinematic_vector[6] and self.cinematic_vector[5] != 0 and \
+		#		self.cinematic_vector[6] != 0:
+		#	self.cuadrante = 'Mouvement diagonal'
+		#else:
+		self.cuadrante = 'Mouvement en L'
 		# elif self.cinematic_vector[5] == 0 or self.cinematic_vector[6] == 0:
 		#	 self.cuadrante = 'Trajectoire Unidirectional'
 		#
@@ -661,8 +662,8 @@ class chemin:
 		################################################################################################################
 
 	def tracker(self):
-
-		print(self.santa.getPoids(), self.santa.positionX, self.santa.positionY)
+		#print(self.santa.getPoids(), self.santa.positionX, self.santa.positionY)
+		pass
 	def move(self):
 		self.santa.ignoreCarottes = True
 		self.travelActions = []
@@ -670,11 +671,11 @@ class chemin:
 		self.santa.positionX = self.begining.positionX
 		self.santa.positionY = self.begining.positionY
 		self.tracker()
-		print("The required mouvement is->")
+		#print("The required mouvement is->")
 
 		if self.cuadrante == 'Mouvement diagonal':
 			################## MOVEMENT DIAGONAL ##########################@
-			print("Mouvement diagonal")
+			#print("Mouvement diagonal")
 			if self.cinematic_vector[2]:
 				self.set_c()
 				self.tracker()
@@ -684,17 +685,20 @@ class chemin:
 			self.acc_c()
 			self.santa.flotter(1)
 			self.travelActions.append(["float",1])
+			self.tempsConsomme += 1
 			self.acc_r()
 			self.santa.flotter(self.cinematic_vector[5]-1)
 			self.travelActions.append(["float",self.cinematic_vector[5]-1])
+			self.tempsConsomme += self.cinematic_vector[5]-1
 			self.stop_c()
 			self.santa.flotter(1)
 			self.travelActions.append(["float",1])
+			self.tempsConsomme += 1
 			self.stop_r()
 			self.tracker()
-			print("fin du mouvement")
+			#print("fin du mouvement")
 		if self.cuadrante == 'Mouvement en L':
-			print("Mouvement L")
+			#print("Mouvement L")
 			# identifier le chemin court
 			Direction = self.cinematic_vector.index(min(self.cinematic_vector[5], self.cinematic_vector[6]), 2)
 
@@ -709,16 +713,18 @@ class chemin:
 				# Après on continue sur l'axis r
 				self.santa.flotter(1)
 				self.travelActions.append(["float",1])
+				self.tempsConsomme += 1
 				if self.cinematic_vector[7]:
 					self.set_r()
 				self.tracker()
 				self.acc_r()
 				self.santa.flotter(self.cinematic_vector[6])
 				self.travelActions.append(["float",self.cinematic_vector[6]])
+				self.tempsConsomme += self.cinematic_vector[6]
 				self.tracker()
 				self.stop_r()
 				self.tracker()
-				print("fin du chemin")
+				#print("fin du chemin")
 			elif Direction == 6:  # le mouvement demarre en r
 				if self.cinematic_vector[7]:
 					self.set_r()
@@ -726,6 +732,7 @@ class chemin:
 				self.acc_r()
 				self.santa.flotter(self.cinematic_vector[6])
 				self.travelActions.append(["float",self.cinematic_vector[6]])
+				self.tempsConsomme += self.cinematic_vector[6]
 				self.stop_r()
 				# on continue sur l'axis c
 				self.santa.flotter(1)
@@ -736,13 +743,14 @@ class chemin:
 				self.acc_c()
 				self.santa.flotter(self.cinematic_vector[5])
 				self.travelActions.append(["float",self.cinematic_vector[5]])
+				self.tempsConsomme += self.cinematic_vector[5]
 				self.tracker()
 				self.stop_c()
 				self.tracker()
-				print("fin du chemiiiin")
+				#print("fin du chemiiiin")
 			for cadeau in self.end.cadeaux:
 				if(not cadeau.delivre):
-					self.travelActions.append("DeliverGift", cadeau.nom)
+					self.travelActions.append(["DeliverGift", cadeau.nom])
 
 
 	def set_c(self): #function qui va régler le rattrapage dans la coordonée c
@@ -757,6 +765,7 @@ class chemin:
 			self.santa.accelerer(self.cinematic_vector[3], "right")
 			self.travelActions.extend([["accLeft",self.cinematic_vector[3]],["float",1],["accRight",self.cinematic_vector[3]],["float",1]])
 		self.santa.flotter(1)
+		self.tempsConsomme += 2
 		self.carotteConsommes += 2
 
 	def set_r(self): #function qui va régler le rattrapage dans la coordonée r
@@ -771,6 +780,7 @@ class chemin:
 			self.santa.accelerer(self.cinematic_vector[4], "up")
 			self.travelActions.extend([["accUp",self.cinematic_vector[4]],["float",1],["accDown",self.cinematic_vector[4]],["float",1]])
 		self.santa.flotter(1)
+		self.tempsConsomme += 2
 		self.carotteConsommes += 2
 
 
@@ -822,7 +832,7 @@ class chemin:
 		chemin_str = str()
 		for ligne in self.travelActions:
 			ligne[1] = str(ligne[1])
-			chemin_str = chemin_str + ' '.join(ligne) + '\n'
+			chemin_str = chemin_str + '\n' +  ' '.join(ligne)
 		return chemin_str
 
 
@@ -835,14 +845,26 @@ class boucle:
 		self.loadingActions:list[list[str|int]] = []
 		self.chemins:list[chemin] = []
 
+	def getCarotteConsommes(self):
+		ret = 0
+		for chemin in self.chemins:
+			ret += chemin.carotteConsommes
+		return ret
+
+	def getTempsConsomme(self):
+		ret = 0
+		for chemin in self.chemins:
+			ret += chemin.tempsConsomme
+		return ret
+		
 	def __str__(self) -> str:
 		# TODO : sérialisation - transformation de self.chemins en string ICI
 		boucle_str = str()
 		for ligne in self.loadingActions:
 			ligne[1] = str(ligne[1])
-			boucle_str = boucle_str + ' '.join(ligne) + '\n'
+			boucle_str = boucle_str + '\n' + ' '.join(ligne)
 		for element in self.chemins:
-			boucle_str = boucle_str + str(element) + '\n'
+			boucle_str = boucle_str + str(element)
 		return boucle_str
 
 
@@ -857,6 +879,6 @@ class parcoursFinal:
 		# TODO : sérialisation - transformation de self.boucles en string ICI
 		parcoursFinal_str = str()
 		for element in self.boucles:
-			parcoursFinal_str = parcoursFinal_str + str(element) + '\n'
+			parcoursFinal_str = parcoursFinal_str + '\n' + str(element)
 		return parcoursFinal_str
 
