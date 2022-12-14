@@ -6,49 +6,29 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-from model import cadeau, heatMap
-from random import randint
-import time
+import parser
+import model
 
-l = []
-hmax = 2000
-wmax = 2000
-for i in range(10000):
-	l.append(cadeau(str(i),1,1,randint(-wmax,wmax),randint(-hmax,hmax)))
+(cadeaux, seconde,reachrange,acccalc) = parser.parseChallenge("a_an_example.in.txt")
+heatmap = model.heatMap(reachrange,cadeaux)
+heatmap.display()
 
-t1 = time.perf_counter()
-map = heatMap(100,l)
-t2 = time.perf_counter()
-print(f"Chargement des données {t2 - t1:0.4f} Secondes")
-t1 = time.perf_counter()
-for i in map.regions:
-	for j in i:
-		j.getPoids()
-t2 = time.perf_counter()
-print(f"Recuperation du poids par région {t2 - t1:0.4f} Secondes")
+(cadeaux, seconde,reachrange,acccalc) = parser.parseChallenge("b_better_hurry.in.txt")
+heatmap = model.heatMap(reachrange,cadeaux)
+heatmap.display()
 
-#Affichage de la heatMap
-map.display()
+(cadeaux, seconde,reachrange,acccalc) = parser.parseChallenge("c_carousel.in.txt")
+heatmap = model.heatMap(reachrange,cadeaux)
+heatmap.display()
 
+(cadeaux, seconde,reachrange,acccalc) = parser.parseChallenge("d_decorated_houses.in.txt")
+heatmap = model.heatMap(reachrange,cadeaux)
+heatmap.display()
 
+(cadeaux, seconde,reachrange,acccalc) = parser.parseChallenge("e_excellent_weather.in.txt")
+heatmap = model.heatMap(reachrange,cadeaux)
+heatmap.display()
 
-t1 = time.perf_counter()
-for i in map.regions:
-	for j in i:
-		for k in j.getGroups():
-			for m in k:
-				m.getPoids()
-t2 = time.perf_counter()
-print(f"Chargement du poids de toute les coordonées  {t2 - t1:0.4f} Secondes")
-
-
-"""for row in rangeCalculator(3).rangeMask:
-	for col in row:
-		print("[]" if col else "..",end="")
-	print("")
-calc = rangeCalculator(3)
-print("")
-for i in range(7):
-	for j in range(7):
-		print("[]" if calc.isInRange(3,3,i,j) else "..",end="")
-	print("")"""
+(cadeaux, seconde,reachrange,acccalc) = parser.parseChallenge("f_festive_flyover.in.txt")
+heatmap = model.heatMap(reachrange,cadeaux)
+heatmap.display()
