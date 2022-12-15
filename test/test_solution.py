@@ -7,4 +7,4 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 import scorer
-print(scorer.score("d_decorated_houses.in.txt","test.out.txt"))
+print(scorer.score("a_an_example.in.txt","test-a.out.txt"))

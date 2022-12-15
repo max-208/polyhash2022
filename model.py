@@ -703,6 +703,9 @@ class chemin:
 			self.travelActions.append(["Float",1])
 			self.tempsConsomme += 1
 			self.stop_r()
+			self.santa.flotter(1)
+			self.travelActions.append(["Float",1])
+			self.tempsConsomme += 1
 			self.tracker()
 			#print	("fin du mouvement")
 		if self.quadrant == 'Mouvement en L':
@@ -731,6 +734,9 @@ class chemin:
 				self.tempsConsomme += self.cinematic_vector[6]
 				self.tracker()
 				self.stop_r()
+				self.santa.flotter(1)
+				self.travelActions.append(["Float",1])
+				self.tempsConsomme += 1
 				self.tracker()
 				##print	("fin du chemin")
 			else:  # le mouvement demarre en r
@@ -755,6 +761,9 @@ class chemin:
 				self.tempsConsomme += self.cinematic_vector[5]
 				self.tracker()
 				self.stop_c()
+				self.santa.flotter(1)
+				self.travelActions.append(["Float",1])
+				self.tempsConsomme += 1
 				self.tracker()
 				#print	("fin du chemiiiin")
 		if self.quadrant == 'Trajectoire Unidirectional':
@@ -769,6 +778,9 @@ class chemin:
 				self.travelActions.append(["Float",self.cinematic_vector[5]])
 				self.tempsConsomme += self.cinematic_vector[5]
 				self.stop_c()
+				self.santa.flotter(1)
+				self.travelActions.append(["Float",1])
+				self.tempsConsomme += 1
 				self.tracker()
 			if self.delta_c == 0:
 				#print	("Mouvement uni en R")
@@ -780,6 +792,9 @@ class chemin:
 				self.travelActions.append(["Float",self.cinematic_vector[6]])
 				self.tempsConsomme += self.cinematic_vector[6]
 				self.stop_r()
+				self.santa.flotter(1)
+				self.travelActions.append(["Float",1])
+				self.tempsConsomme += 1
 				self.tracker()
 				#print	("finfinfinfin")
 		for cadeau in self.end.cadeaux:
