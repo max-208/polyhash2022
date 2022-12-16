@@ -1,9 +1,9 @@
 from model import traineau,heatMap
-import parser
+import fileParser
 
 def score(problemFineName, solutionFileName) -> int:
-	(cadeaux, timeLimit,reachrange,acccalc) = parser.parseChallenge(problemFineName)	
-	instructions = parser.parseSolution(solutionFileName)
+	(cadeaux, timeLimit,reachrange,acccalc) = fileParser.parseChallenge(problemFineName)	
+	instructions = fileParser.parseSolution(solutionFileName)
 	t = traineau(reachrange,acccalc)
 	map = heatMap(reachrange,cadeaux)
 	timeSpent = 0
