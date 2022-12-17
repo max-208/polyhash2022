@@ -11,9 +11,9 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 
 from model import cadeau,groupe, heatMap, chemin, boucle, parcoursFinal,traineau,accelerationCalculator
-import parser
+import fileParser
 
-(cadeaux, secondes, reachRange, accCalculator) = parser.parseChallenge(challenge)
+(cadeaux, secondes, reachRange, accCalculator) = fileParser.parseChallenge(challenge)
 
 heatmap = heatMap(reachRange,cadeaux)
 parcoursFinal = parcoursFinal()
@@ -34,28 +34,28 @@ while (secondes > 0 and maxVal != -math.inf):
 				if(val > maxVal):
 					maxVal = val
 					maxRegion = region
-	print("---")
 	# pour cette région on prend le meilleur point
 	if(maxRegion != None):
 		maxVal = -math.inf
-		maxGroup = None
+		maxGroup = groupe(0,0)
 		groups = maxRegion.getGroups()
 		for row in groups:
 			for group in row:
 				score = group.getScore()
+				accCalculator.updatePoids(group.getPoids() + 8)
 				if(score == 0 or (group.positionX == 0 and group.positionY == 0)):
 					val = -math.inf
 				else:
-					val = score*2 - group.getPoids()
+					val = score*10 - group.getPoids()*2
 					if(val > maxVal):
 						maxVal = val
 						maxGroup = group
-
+		
 		print("---",secondes,",",maxVal, "(",maxGroup.positionX,",",maxGroup.positionY,") ->",maxGroup.getScore())# [str(cadeau) for cadeau in maxGroup.cadeaux])
-		accCalculator.updatePoids(maxGroup.getPoids() + 16) # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
+		accCalculator.updatePoids(maxGroup.getPoids() + 8) # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
 		cheminAller = chemin(groupe(0,0),maxGroup,reachRange,accCalculator)
 		cheminAller.move()
-		accCalculator.updatePoids(8) # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
+		accCalculator.updatePoids(4) # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
 		cheminRetour = chemin(maxGroup,groupe(0,0),reachRange,accCalculator)
 		cheminRetour.move()
 		bcl = boucle()

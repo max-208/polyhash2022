@@ -1,6 +1,5 @@
 from typing import Literal
 from scipy.spatial import distance
-from numpy.linalg import norm
 import math
 from tkinter import *
 
@@ -52,10 +51,6 @@ class accelerationCalculator:
 		return self
 
 
-
-
-
-
 class rangeCalculator:
 	"""
 	classe permettant de déterminer si une case est
@@ -69,9 +64,6 @@ class rangeCalculator:
 			for j in range(reachRange*2 + 1):
 				row.append((distance.euclidean([reachRange,reachRange],[i,j]) <= reachRange))
 			self.rangeMask.append(row)
-				
-
-		
 
 	def isInRange(self, originX : int, originY : int, targetX : int, targetY : int) -> bool:
 		"""
@@ -94,6 +86,7 @@ class rangeCalculator:
 
 		#ici j'utilise scipy car c'est une opération qui va etre répété très souvent et elle a bien interret a etre optimisé comme jaja
 		#return distance.euclidean([originX,originY],[targetX,targetY]) <= range
+
 
 class cadeau:
 	"""
@@ -124,6 +117,7 @@ class cadeau:
 		# ici je définis comment comparer deux tableau comme ça on pourra les trier par poids facilement avec .sort()
 		#TODO : ici on peut eventuelleement penser a ajouter un poids a la distance dans la comparaison
 		return self.poids < other.poids
+
 
 class groupe:
 	"""
@@ -198,6 +192,7 @@ class groupe:
 			int: score du groupe
 		"""
 		return sum([(0 if elem.delivre else elem.score) for elem in self.cadeaux])
+
 
 class region():
 	"""
@@ -285,7 +280,6 @@ class region():
 		return ret
 
 
-
 class heatMap:
 	"""
 	classe représentant une "heatmap" soit une carte globale contenant des régions qui elles meme contiennent des groupes
@@ -340,8 +334,8 @@ class heatMap:
 		window = Tk()
 		width = len(self.regions)
 		height = len(self.regions[0])
-		map = Canvas(window, width=width*rectangleSize, height=height*rectangleSize)
-		map.pack()
+		heatmap = Canvas(window, width=width*rectangleSize, height=height*rectangleSize)
+		heatmap.pack()
 		rowIndex = 0
 		minPoids = math.inf
 		maxPoids = -math.inf
@@ -363,8 +357,8 @@ class heatMap:
 			color = "#%02x%02x%02x" % (255-proportion, 255-proportion, 255-proportion)
 			rowIndex = data[i].__getitem__(0)
 			columnIndex = data[i].__getitem__(1)
-			map.create_rectangle(rowIndex, columnIndex, rowIndex + rectangleSize + 1,columnIndex + rectangleSize + 1, fill=color, outline=color)
-		map.create_rectangle(-self.offsetX//self.regionSize*rectangleSize, -self.offsetY//self.regionSize*rectangleSize, -self.offsetX//self.regionSize*rectangleSize + rectangleSize + 1, -self.offsetY//self.regionSize*rectangleSize + rectangleSize + 1, fill='', outline='red')
+			heatmap.create_rectangle(rowIndex, columnIndex, rowIndex + rectangleSize + 1,columnIndex + rectangleSize + 1, fill=color, outline=color)
+		heatmap.create_rectangle(-self.offsetX//self.regionSize*rectangleSize, -self.offsetY//self.regionSize*rectangleSize, -self.offsetX//self.regionSize*rectangleSize + rectangleSize + 1, -self.offsetY//self.regionSize*rectangleSize + rectangleSize + 1, fill='', outline='red')
 		mainloop()
 
 
@@ -407,7 +401,6 @@ class traineau:
 		Returns:
 			traineau: soi-meme
 		"""
-		#TODO : integrer la verification de l'acceleration max par raport au chargement des cadeaux
 		if(quantity <= self.accelerationCalculator.getMaxAcceleration()):
 			if(quantity >= 0):
 				if(self.nbCarottes > 0 or self.ignoreCarottes):
@@ -517,7 +510,6 @@ class traineau:
 				self.poids += -cadeau.poids
 				self.accelerationCalculator.updatePoids(self.getPoids())
 				cadeau.delivre = True
-				#TODO : implémenter le score
 			else:
 				raise RuntimeWarning("il est impossible de livrer un cadeau qui n'est pas chargé dans le traineau : " + str(cadeau))
 		else:
@@ -580,7 +572,6 @@ class chemin:
 		self.begining = begining
 		self.end = end
 		self.travelActions:list[list[str|int]] = []
-		self.santa = traineau(reachRange,accelerationCalculator)
 		# format de self.travelActions: 
 		# [
 		# 	["AccLeft", 8],
@@ -590,294 +581,266 @@ class chemin:
 		# 	["LoadCarrots", 2],
 		# 	["LoadGift", "Amine"]
 		# ]
-		self.carotteConsommes = 0
-		#Distance relative entre le point initial et le point destination
-		self.delta_c: int = end.positionX - begining.positionX 		#delta_c corresponds à la distance relative en C
-		self.delta_r: int = end.positionY - begining.positionY		#delta_r corresponds à la distance relative en R
-		#
+		self.reachRange = reachRange
 		self.tempsConsomme = 0
-		self.delta_c: int = end.positionX - begining.positionX
-		self.delta_r: int = end.positionY - begining.positionY
+		self.carotteConsommes = 0
+		self.accelerationCalculator = accelerationCalculator
+		self.traineau = traineau(self.reachRange,self.accelerationCalculator)
+		#Distance relative entre le point initial et le point destination
+		self.delta_x: int = end.positionX - begining.positionX 		#delta_x corresponds à la distance relative en C
+		self.delta_y: int = end.positionY - begining.positionY		#delta_y corresponds à la distance relative en R
 		
-	def updateCinematicVector(self):
-		u = [abs(self.delta_c), abs(self.delta_r)] / norm([self.delta_c, self.delta_r])
-		a = [math.floor(abs(u[0] * self.santa.accelerationCalculator.getMaxAcceleration())) if abs(u[0] * self.santa.accelerationCalculator.getMaxAcceleration()) >= 1 else 1,
-			 math.floor(abs(u[1] * self.santa.accelerationCalculator.getMaxAcceleration())) if abs(u[1] * self.santa.accelerationCalculator.getMaxAcceleration()) >= 1 else 1]
-
-		#################################### DEFINITION VERCTOR CINEMATIQUE ##########################################
-		# vector cinematique :
-		# [0] ->acc maximale dans la coordonée c, float type
-		# [1] ->acc maximale dans la coordonée r, float type
-		# [2] ->il y a un rattrapage en c? False si il n'y a pas, True si il faut s'arreter deux fois
-		# [3] ->acc de rattrapage en c
-		# [4] ->acc de rattrapage en r
-		# [5] ->Temps d'arrive à la coordonée c
-		# [6] ->Temps d'arrive à la coordonée r
-		# [7] ->il y a un rattrapage en r? False si il n'y a pas, True si il faut s'arreter deux fois
-
-		a2 = [0, 0, False, 0, 0, 0, 0, False]
-		if a[0] > abs(self.delta_c):
-			a2[0] = abs(self.delta_c)
-			a2[2] = False
-			a2[5] = 1
-		elif self.delta_c == 0:
-			a2[0] = 0
-			a2[2] = False
-			a2[5] = 0
-		elif self.delta_c % a[0] == 0:
-			a2[0] = a[0]
-			a2[2] = False
-			a2[5] = math.floor(abs(self.delta_c / a[0]))
-		else:
-			a2[0] = a[0]
-			a2[2] = True
-			a2[5] = math.floor(abs(self.delta_c / a[0]))
-			a2[3] = abs(self.delta_c) % a2[0]
-
-		if a[1] > abs(self.delta_r):
-			a2[1] = abs(self.delta_r)
-			a2[7] = False
-			a2[6] = 1
-		elif self.delta_r == 0:
-			a2[1] = a[1]
-			a2[7] = False
-			a2[6] = 0
-		elif self.delta_r % a[1] == 0:
-			a2[1] = a[1]
-			a2[7] = False
-			a2[6] = math.floor(abs(self.delta_r / a[1]))
-		else:
-			a2[1] = a[1]
-			a2[7] = True
-			a2[6] = math.floor(abs(self.delta_r / a[1]))
-			a2[4] = abs(self.delta_r) % a2[1]
-		self.cinematic_vector: list[int, int, bool, int, int, int, int, bool] = a2
-		#################################### DEFINITION CUADRANTE #####################################################
-		# On va definit 8 situations differents pour encadrer la navegation de santa
-		# l'idee c'est de adapter les action de santa au fur et mesure de la position relative du point de destination
-
-		if self.cinematic_vector[5] == self.cinematic_vector[6] and self.cinematic_vector[5] > 1 and \
-				self.cinematic_vector[6] > 1:
-			self.quadrant = 'Mouvement diagonal'
-		elif self.delta_c == 0 or self.delta_r == 0:
-			self.quadrant = 'Trajectoire Unidirectional'
-		else:
-			self.quadrant = 'Mouvement en L'
-
-		################################################################################################################
-
-	def tracker(self):
-		#print	(self.carotteConsommes, self.santa.positionX, self.santa.positionY)
-		pass
 	def move(self):
-		self.santa.ignoreCarottes = True
+		self.traineau.positionX = self.begining.positionX
+		self.traineau.positionY = self.begining.positionY
+		self.traineau.ignoreCarottes = True
 		self.travelActions = []
 		self.carotteConsommes = 0
 		self.tempsConsomme = 0
+		if(self.accelerationCalculator.getMaxAcceleration() <= 0):
+			self.tempsConsomme = -math.inf
+			return
+		
+		# calcul de l'accélération maximale possible permettant d'arriver a point + l'éventuel rattrapage a effectuer
+		acc = self.accelerationCalculator.getMaxAcceleration()
 
-		self.updateCinematicVector()
+		self.stepAccelerationX = acc if acc < abs(self.delta_x) else abs(self.delta_x)
+		self.stepAccelerationY = acc if acc < abs(self.delta_y) else abs(self.delta_y)
 
-		self.santa.positionX = self.begining.positionX
-		self.santa.positionY = self.begining.positionY
-		self.tracker()
-		##print	("The required mouvement is->")
+		self.catchupX = abs(self.delta_x)%acc if acc < abs(self.delta_x) else 0
+		self.catchupY = abs(self.delta_y)%acc if acc < abs(self.delta_y) else 0
 
-		if self.quadrant == 'Mouvement diagonal':
-			################## MOVEMENT DIAGONAL ##########################@
-			#print	("Mouvement diagonal")
-			if self.cinematic_vector[2]:
-				self.set_c()
-			if self.cinematic_vector[7]:
-				self.set_r()
-			self.tracker()
-			self.acc_c()
-			self.santa.flotter(1)
-			self.travelActions.append(["Float",1])
-			self.tempsConsomme += 1
-			self.acc_r()
-			self.santa.flotter(self.cinematic_vector[5]-1)
-			self.travelActions.append(["Float",self.cinematic_vector[5]-1])
-			self.tempsConsomme += self.cinematic_vector[5]-1
-			self.stop_c()
-			self.santa.flotter(1)
-			self.travelActions.append(["Float",1])
-			self.tempsConsomme += 1
-			self.stop_r()
-			self.santa.flotter(1)
-			self.travelActions.append(["Float",1])
-			self.tempsConsomme += 1
-			self.tracker()
-			#print	("fin du mouvement")
-		if self.quadrant == 'Mouvement en L':
-			#print	("Mouvement L")
-			# identifier le chemin court
+		# calcul du nombre d'étapes nécéssaires pour s'aligner avec la coordonnée de l'objectif en allant a la vitesse calculée ci-dessus
+		tempsX = math.dist([self.begining.positionX],[self.end.positionX])//self.stepAccelerationX if self.stepAccelerationX > 0 else 0
+		tempsY = math.dist([self.begining.positionY],[self.end.positionY])//self.stepAccelerationY if self.stepAccelerationY > 0 else 0
 
-			if self.cinematic_vector[5] < self.cinematic_vector[6]:  # le mouvement demarre en c
-				if self.cinematic_vector[2]:
-					self.set_c()
-				self.tracker()
-				self.acc_c()
-				self.santa.flotter(self.cinematic_vector[5])
-				self.travelActions.append(["Float",self.cinematic_vector[5]])
-				self.tempsConsomme += self.cinematic_vector[5]
-				self.stop_c()
-				# Après on continue sur l'axis r
-				self.santa.flotter(1)
-				self.travelActions.append(["Float",1])
-				self.tempsConsomme += 1
-				if self.cinematic_vector[7]:
-					self.set_r()
-				self.tracker()
-				self.acc_r()
-				self.santa.flotter(self.cinematic_vector[6])
-				self.travelActions.append(["Float",self.cinematic_vector[6]])
-				self.tempsConsomme += self.cinematic_vector[6]
-				self.tracker()
-				self.stop_r()
-				self.santa.flotter(1)
-				self.travelActions.append(["Float",1])
-				self.tempsConsomme += 1
-				self.tracker()
-				##print	("fin du chemin")
-			else:  # le mouvement demarre en r
-				if self.cinematic_vector[7]:
-					self.set_r()
-				self.tracker()
-				self.acc_r()
-				self.santa.flotter(self.cinematic_vector[6])
-				self.travelActions.append(["Float",self.cinematic_vector[6]])
-				self.tempsConsomme += self.cinematic_vector[6]
-				self.stop_r()
-				# on continue sur l'axis c
-				self.santa.flotter(1)
-				self.travelActions.append(["Float",1])
-				self.tempsConsomme += 1
-				if self.cinematic_vector[2]:
-					self.set_c()
-				self.tracker()
-				self.acc_c()
-				self.santa.flotter(self.cinematic_vector[5])
-				self.travelActions.append(["Float",self.cinematic_vector[5]])
-				self.tempsConsomme += self.cinematic_vector[5]
-				self.tracker()
-				self.stop_c()
-				self.santa.flotter(1)
-				self.travelActions.append(["Float",1])
-				self.tempsConsomme += 1
-				self.tracker()
-				#print	("fin du chemiiiin")
-		if self.quadrant == 'Trajectoire Unidirectional':
-			if self.delta_r == 0:
-				#print	("Mouvement uni en C")
-				#Le mouvement se fait que dans le sens c
-				if self.cinematic_vector[2]:
-					self.set_c()
-				self.tracker()
-				self.acc_c()
-				self.santa.flotter(self.cinematic_vector[5])
-				self.travelActions.append(["Float",self.cinematic_vector[5]])
-				self.tempsConsomme += self.cinematic_vector[5]
-				self.stop_c()
-				self.santa.flotter(1)
-				self.travelActions.append(["Float",1])
-				self.tempsConsomme += 1
-				self.tracker()
-			if self.delta_c == 0:
-				#print	("Mouvement uni en R")
-				if self.cinematic_vector[7]:
-					self.set_r()
-				self.tracker()
-				self.acc_r()
-				self.santa.flotter(self.cinematic_vector[6])
-				self.travelActions.append(["Float",self.cinematic_vector[6]])
-				self.tempsConsomme += self.cinematic_vector[6]
-				self.stop_r()
-				self.santa.flotter(1)
-				self.travelActions.append(["Float",1])
-				self.tempsConsomme += 1
-				self.tracker()
-				#print	("finfinfinfin")
+		# mouvement évident (ne pas bouger)
+		if(self.begining.positionX == self.end.positionX and self.begining.positionY == self.end.positionY):
+			pass
+
+		# mouvements évidents (lignes droites)
+		#
+		#   a v
+		#   |           >      <
+		#   .      et  a -- . -- b
+		#   |
+		#   b ^
+		#
+		elif(self.begining.positionX == self.end.positionX):
+			#print("Y")
+			# alignement sur l'axe Y
+			self.lineY()
+		elif(self.begining.positionY == self.end.positionY):
+			#print("X")
+			# alignement sur l'axe X
+			self.lineX()
+		
+		#mouvement proches (distance manhattan de - de 3 fois l'acceleration max)
+		#
+		#   v a                   v a
+		#     |              et     |
+		#   ^ . -- . -- b         ^ . -- b
+		#      >        <            >  <
+		#
+		else: #elif(abs(self.delta_x)/self.stepAccelerationX + abs(self.delta_y)/self.stepAccelerationY <= 3):
+			#print("L")
+			# alignement sur l'axe Y
+			self.lineY()
+			# alignement sur l'axe X
+			self.lineX()
+		""" on met temporairement de coté les parcours composés, trop difficile a développer actuellement pour une v3
+		#mouvements restants : cas combinés
+		elif( tempsY > tempsX):
+			#print("YS")
+			# cas vertical
+			#
+			#      b v
+			#      |
+			#      . <
+			#     /
+			#    .
+			#   /
+			#  . >
+			#  |
+			#  .
+			#  |
+			#  a ^
+			#
+
+			# impulsion en Y
+			self.acceleration_y(self.stepAccelerationY,1)
+
+			# impulsion puis deceleration en X
+			self.lineX()
+
+			# flotter jusqu'a la fin
+			dist =  (abs(self.end.positionY - self.traineau.positionY) // self.stepAccelerationY) - 1
+			print("dist", dist)
+			if( dist > 0 ):
+				self.traineau.flotter(dist)
+				self.travelActions.append(["Float",dist])
+				self.tempsConsomme += dist
+
+			# ralentissement partiel
+			self.ralentissement_y(self.stepAccelerationY-self.catchupY,1)
+
+			#ralentissement total (si ajustements nécéssaires)
+			if(self.catchupY != 0):
+				self.ralentissement_y(self.catchupY,1)
+
+		elif(tempsY < tempsX):
+			#print("XS")
+			# cas horizontal
+			#                    <
+			#             v  . -- b
+			#               /
+			#              .
+			#   >       ^ /
+			#  a -- . -- .
+			#
+
+			#impulsion en X
+			self.acceleration_x(self.stepAccelerationX,1)
+
+			# impulsion puis deceleration en Y
+			self.lineY()
+			
+			# flotter jusqu'a la fin
+			dist = (abs(self.end.positionX - self.traineau.positionX) // self.stepAccelerationX) -1
+			if(dist > 0):
+				self.traineau.flotter(dist)
+				self.travelActions.append(["Float",dist])
+				self.tempsConsomme += dist
+
+			# ralentissement partiel
+			self.ralentissement_y(self.stepAccelerationY-self.catchupY,1)
+
+			#ralentissement total (si ajustements nécéssaires)
+			if(self.catchupY != 0):
+				self.ralentissement_y(self.catchupY,1)
+
+		elif(tempsY == tempsX):
+			#print("DS")
+			# cas diagonal
+			#
+			#         v b
+			#           |
+			#         < .
+			#          /
+			#         .
+			#   >  ^ /
+			#  a -- . 
+			#
+
+			# impulsion en X
+			self.acceleration_x(self.stepAccelerationX,1)
+			
+			# impulsion en Y
+			self.acceleration_y(self.stepAccelerationY,1)
+
+			# flotter pendant la zone de transition
+			self.traineau.flotter(int(tempsX - 2))
+			self.travelActions.append(["Float",int(tempsX - 2)])
+			self.tempsConsomme += int(tempsX - 2)
+
+			# ralentissement en X
+			self.ralentissement_x(self.stepAccelerationX,1)
+
+			# ralentissement en Y
+			self.ralentissement_y(self.stepAccelerationY,1)
+		"""
+		# ajout des étapes de livraison des cadeaux
 		for cadeau in self.end.cadeaux:
 			if(not cadeau.delivre):
 				self.travelActions.append(["DeliverGift", cadeau.nom])
-		if(self.santa.positionX != self.end.positionX or self.santa.positionY != self.end.positionY):
-			raise RuntimeWarning("échec lors du décplacement, le trainneau n'est pas correctement arrivé a destination : ", self.travelActions)
+				
+		if(self.traineau.positionX != self.end.positionX or self.traineau.positionY != self.end.positionY):
+			print("\n\n(",self.begining.positionX,self.begining.positionY,") --(",self.traineau.positionX,self.traineau.positionY,")--> (",self.end.positionX,self.end.positionY,")\n\n","delta(",self.delta_x, self.delta_y,") acc(", self.stepAccelerationX,self.stepAccelerationY,") reste(",self.catchupX,self.catchupY,") temps(", tempsX,tempsY,")\n\n", self.travelActions,"\n\n")
+			raise RuntimeWarning("échec lors du décplacement, le traineau n'est pas correctement arrivé a destination")
 
-	def set_c(self): #function qui va régler le rattrapage dans la coordonée c
-		if self.delta_c >= 1:
-			self.santa.accelerer(self.cinematic_vector[3], "right")
-			self.santa.flotter(1)
-			self.santa.accelerer(self.cinematic_vector[3], "left")
-			self.travelActions.extend([["AccRight",self.cinematic_vector[3]],["Float",1],["AccLeft",self.cinematic_vector[3]],["Float",1]])
-		elif self.delta_c <= -1:
-			self.santa.accelerer(self.cinematic_vector[3], "left")
-			self.santa.flotter(1)
-			self.santa.accelerer(self.cinematic_vector[3], "right")
-			self.travelActions.extend([["AccLeft",self.cinematic_vector[3]],["Float",1],["AccRight",self.cinematic_vector[3]],["Float",1]])
-		self.santa.flotter(1)
-		self.tempsConsomme += 2
-		self.carotteConsommes += 2
+	def lineX(self):
 
-	def set_r(self): #function qui va régler le rattrapage dans la coordonée r
-		if self.delta_r >= 1:
-			self.santa.accelerer(self.cinematic_vector[4], "up")
-			self.santa.flotter(1)
-			self.santa.accelerer(self.cinematic_vector[4], "down")
-			self.travelActions.extend([["AccUp",self.cinematic_vector[4]],["Float",1],["AccDown",self.cinematic_vector[4]],["Float",1]])
-		elif self.delta_r <= -1:
-			self.santa.accelerer(self.cinematic_vector[4], "down")
-			self.santa.flotter(1)
-			self.santa.accelerer(self.cinematic_vector[4], "up")
-			self.travelActions.extend([["AccDown",self.cinematic_vector[4]],["Float",1],["AccUp",self.cinematic_vector[4]],["Float",1]])
-		self.santa.flotter(1)
-		self.tempsConsomme += 2
-		self.carotteConsommes += 2
+		intermediaryAccelerations = math.floor(math.sqrt(abs(self.delta_x)/self.stepAccelerationX))
 
+		for i in range(intermediaryAccelerations):
+			self.acceleration_x(self.stepAccelerationX,1)
 
-	def acc_c(self):
-		assert self.delta_c != 0
-		self.tracker()
-		if self.delta_c >= 1:
-			self.santa.accelerer(self.cinematic_vector[0], "right")
-			self.travelActions.append(["AccRight",self.cinematic_vector[0]])
-			self.carotteConsommes += 1
-		else:
-			self.santa.accelerer(self.cinematic_vector[0], "left")
-			self.travelActions.append(["AccLeft",self.cinematic_vector[0]])
-			self.carotteConsommes += 1
+		for i in range(intermediaryAccelerations-1):
+			self.ralentissement_x(self.stepAccelerationX,1)
 
-	def acc_r(self):
-		assert self.delta_r != 0
-		if self.delta_r >= 1:
-			self.santa.accelerer(self.cinematic_vector[1], "up")
-			self.travelActions.append(["AccUp",self.cinematic_vector[1]])
-			self.carotteConsommes += 1
-		else:
-			self.santa.accelerer(self.cinematic_vector[1], "down")
-			self.travelActions.append(["AccDown",self.cinematic_vector[1]])
-			self.carotteConsommes += 1
+		# flotter jusqu'a la fin
+		dist = (abs(self.end.positionX - self.traineau.positionX) // self.stepAccelerationX)
+		if(dist > 0):
+			self.traineau.flotter(dist)
+			self.travelActions.append(["Float",dist])
+			self.tempsConsomme += dist
 
-	def stop_c(self):
-		self.tracker()
-		if self.delta_c >= 1:
-			self.santa.accelerer(self.cinematic_vector[0], "left")
-			self.travelActions.append(["AccLeft",self.cinematic_vector[0]])
-			self.carotteConsommes += 1
-		if self.delta_c <= -1:
-			self.santa.accelerer(self.cinematic_vector[0], "right")
-			self.travelActions.append(["AccRight",self.cinematic_vector[0]])
-			self.carotteConsommes += 1
+		# ralentissement partiel
+		self.ralentissement_x(self.stepAccelerationX - self.catchupX,1)
 
-	def stop_r(self):
-		self.tracker()
-		if self.delta_r >= 1:
-			self.santa.accelerer(self.cinematic_vector[1], "down")
-			self.travelActions.append(["AccDown",self.cinematic_vector[1]])
-			self.carotteConsommes += 1
-		if self.delta_r <= -1:
-			self.santa.accelerer(self.cinematic_vector[1], "up")
-			self.travelActions.append(["AccUp",self.cinematic_vector[1]])
-			self.carotteConsommes += 1
+		#ralentissement total (si ajustements nécéssaires)
+		if(self.catchupX != 0):
+			self.ralentissement_x(self.catchupX, 1)
+		
+
+	def lineY(self):
+		intermediaryAccelerations = math.floor(math.sqrt(abs(self.delta_y)/self.stepAccelerationY))
+		
+		for i in range(intermediaryAccelerations):
+			self.acceleration_y(self.stepAccelerationY,1)
+
+		for i in range(intermediaryAccelerations-1):
+			self.ralentissement_y(self.stepAccelerationY,1)
+			
+		# flotter jusqu'a la fin
+		dist =  (abs(self.end.positionY - self.traineau.positionY) // self.stepAccelerationY)
+		if( dist > 0 ):
+			self.traineau.flotter(dist)
+			self.travelActions.append(["Float",dist])
+			self.tempsConsomme += dist
+
+		# ralentissement partiel
+		self.ralentissement_y(self.stepAccelerationY-self.catchupY,1)
+
+		#ralentissement total (si ajustements nécéssaires)
+		if(self.catchupY != 0):
+			self.ralentissement_y(self.catchupY,1)
+
+	def acceleration_x(self,acceleration : int, numFloat: int):
+			self.traineau.accelerer(acceleration, "left" if self.delta_x < 0 else "right")
+			self.travelActions.append(["AccLeft" if self.delta_x < 0 else "AccRight",acceleration])
+			self.carotteConsommes +=1
+			self.traineau.flotter(numFloat)
+			self.travelActions.append(["Float",numFloat])
+			self.tempsConsomme += numFloat
+			#print("acceleration x :",self.traineau.positionX, self.traineau.vitesseX)
+
+	def ralentissement_x(self,acceleration : int, numFloat: int):
+			self.traineau.accelerer(acceleration,"right" if self.delta_x < 0 else "left")
+			self.travelActions.append(["AccRight" if self.delta_x < 0 else "AccLeft",acceleration])
+			self.carotteConsommes +=1
+			self.traineau.flotter(numFloat)
+			self.travelActions.append(["Float",numFloat])
+			self.tempsConsomme += numFloat
+			#print("ralentissement x :", self.traineau.positionX, self.traineau.vitesseX)
+
+	def acceleration_y(self,acceleration : int, numFloat: int):
+			self.traineau.accelerer(acceleration, "down" if self.delta_y < 0 else "up")
+			self.travelActions.append(["AccDown" if self.delta_y < 0 else "AccUp",acceleration])
+			self.carotteConsommes +=1
+			self.traineau.flotter(numFloat)
+			self.travelActions.append(["Float",numFloat])
+			self.tempsConsomme += numFloat
+			#print("acceleration y :",self.traineau.positionY, self.traineau.vitesseY)
+
+	def ralentissement_y(self,acceleration : int, numFloat: int):
+			self.traineau.accelerer(acceleration,"up" if self.delta_y < 0 else "down")
+			self.travelActions.append(["AccUp" if self.delta_y < 0 else "AccDown",acceleration])
+			self.carotteConsommes +=1
+			self.traineau.flotter(numFloat)
+			self.travelActions.append(["Float",numFloat])
+			self.tempsConsomme += numFloat
+			#print("ralentissement y : ", self.traineau.positionY, self.traineau.vitesseY)
 
 	def __str__(self) -> str:
 		chemin_str = str()
@@ -909,7 +872,6 @@ class boucle:
 		return ret
 
 	def __str__(self) -> str:
-		# TODO : sérialisation - transformation de self.chemins en string ICI
 		boucle_str = str()
 		for ligne in self.loadingActions:
 			ligne[1] = str(ligne[1])
@@ -932,7 +894,6 @@ class parcoursFinal:
 		Returns:
 			str: _description_
 		"""
-		# TODO : sérialisation - transformation de self.boucles en string ICI
 		parcoursFinal_str = str()
 		for element in self.boucles:
 			parcoursFinal_str = parcoursFinal_str + str(element)
