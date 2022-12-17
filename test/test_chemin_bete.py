@@ -4,7 +4,7 @@ import inspect
 from scipy.spatial import distance
 import math
 
-challenge = "c_carousel.in.txt"
+challenge = "b_better_hurry.in.txt"
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -37,20 +37,20 @@ while (secondes > 0 and maxVal != -math.inf):
 	# pour cette région on prend le meilleur point
 	if(maxRegion != None):
 		maxVal = -math.inf
-		maxGroup = None
+		maxGroup = groupe(0,0)
 		groups = maxRegion.getGroups()
 		for row in groups:
 			for group in row:
 				score = group.getScore()
 				accCalculator.updatePoids(group.getPoids() + 8)
-				if(score == 0 or (group.positionX == 0 and group.positionY == 0) or math.gcd(group.positionX - 0, accCalculator.getMaxAcceleration()) == 1 or math.gcd(group.positionY - 0, accCalculator.getMaxAcceleration()) == 1):
+				if(score == 0 or (group.positionX == 0 and group.positionY == 0)):
 					val = -math.inf
 				else:
-					val = score*2 - group.getPoids()
+					val = score*10 - group.getPoids()*2
 					if(val > maxVal):
 						maxVal = val
 						maxGroup = group
-
+		
 		print("---",secondes,",",maxVal, "(",maxGroup.positionX,",",maxGroup.positionY,") ->",maxGroup.getScore())# [str(cadeau) for cadeau in maxGroup.cadeaux])
 		accCalculator.updatePoids(maxGroup.getPoids() + 8) # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
 		cheminAller = chemin(groupe(0,0),maxGroup,reachRange,accCalculator)
