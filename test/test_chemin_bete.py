@@ -4,11 +4,11 @@ import inspect
 from scipy.spatial import distance
 import math
 
-challenge = "b_better_hurry.in.txt"
+challenge = "c_carousel.in.txt"
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir) 
+sys.path.insert(0, parentdir)
 
 from model import cadeau,groupe, heatMap, chemin, boucle, parcoursFinal,traineau,accelerationCalculator
 import fileParser
@@ -50,7 +50,7 @@ while (secondes > 0 and maxVal != -math.inf):
 					if(val > maxVal):
 						maxVal = val
 						maxGroup = group
-		
+
 		print("---",secondes,",",maxVal, "(",maxGroup.positionX,",",maxGroup.positionY,") ->",maxGroup.getScore())# [str(cadeau) for cadeau in maxGroup.cadeaux])
 		accCalculator.updatePoids(maxGroup.getPoids() + 8) # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
 		cheminAller = chemin(groupe(0,0),maxGroup,reachRange,accCalculator)
