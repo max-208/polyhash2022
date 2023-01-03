@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Literal
 from scipy.spatial import distance
 import math
@@ -276,7 +277,7 @@ class region():
 						if(self.rangeCalculator.isInRange(cadeau.positionX,cadeau.positionY,i,j)):
 							#print(self.width,i,j,i-self.minX,j-self.minY)
 							ret[i-self.minX][j-self.minY].addCadeau(cadeau)
-		
+
 		return ret
 
 
@@ -324,7 +325,7 @@ class heatMap:
 				newMinY = minY + j * self.regionSize
 				row.append(region(self.regionSize,newMinX,newMinX + self.regionSize,newMinY, newMinY + self.regionSize, self.rangeCalculator ))
 			self.regions.append(row)
-		
+
 		# on y ajoutes les cadeaux
 		for cadeau in cadeaux:
 			self.regions[(cadeau.positionX-self.offsetX)//self.regionSize][(cadeau.positionY-self.offsetY)//self.regionSize].addCadeau(cadeau)
@@ -531,7 +532,7 @@ class traineau:
 				self.chargerCadeau(cadeau)
 		return self
 
-	
+
 	def livrerGroupe(self, groupe: groupe) -> any:
 		"""
 		livre un groupe entier de cadeaux
@@ -572,7 +573,7 @@ class chemin:
 		self.begining = begining
 		self.end = end
 		self.travelActions:list[list[str|int]] = []
-		# format de self.travelActions: 
+		# format de self.travelActions:
 		# [
 		# 	["AccLeft", 8],
 		# 	["float", 3],
@@ -589,7 +590,7 @@ class chemin:
 		#Distance relative entre le point initial et le point destination
 		self.delta_x: int = end.positionX - begining.positionX 		#delta_x corresponds à la distance relative en C
 		self.delta_y: int = end.positionY - begining.positionY		#delta_y corresponds à la distance relative en R
-		
+
 	def move(self):
 		self.traineau.positionX = self.begining.positionX
 		self.traineau.positionY = self.begining.positionY
@@ -600,7 +601,7 @@ class chemin:
 		if(self.accelerationCalculator.getMaxAcceleration() <= 0):
 			self.tempsConsomme = -math.inf
 			return
-		
+
 		# calcul de l'accélération maximale possible permettant d'arriver a point + l'éventuel rattrapage a effectuer
 		acc = self.accelerationCalculator.getMaxAcceleration()
 
@@ -634,7 +635,7 @@ class chemin:
 			#print("X")
 			# alignement sur l'axe X
 			self.lineX()
-		
+
 		#mouvement proches (distance manhattan de - de 3 fois l'acceleration max)
 		#
 		#   v a                   v a
@@ -704,7 +705,7 @@ class chemin:
 
 			# impulsion puis deceleration en Y
 			self.lineY()
-			
+
 			# flotter jusqu'a la fin
 			dist = (abs(self.end.positionX - self.traineau.positionX) // self.stepAccelerationX) -1
 			if(dist > 0):
@@ -729,12 +730,12 @@ class chemin:
 			#          /
 			#         .
 			#   >  ^ /
-			#  a -- . 
+			#  a -- .
 			#
 
 			# impulsion en X
 			self.acceleration_x(self.stepAccelerationX,1)
-			
+
 			# impulsion en Y
 			self.acceleration_y(self.stepAccelerationY,1)
 
@@ -753,7 +754,7 @@ class chemin:
 		for cadeau in self.end.cadeaux:
 			if(not cadeau.delivre):
 				self.travelActions.append(["DeliverGift", cadeau.nom])
-				
+
 		if(self.traineau.positionX != self.end.positionX or self.traineau.positionY != self.end.positionY):
 			print("\n\n(",self.begining.positionX,self.begining.positionY,") --(",self.traineau.positionX,self.traineau.positionY,")--> (",self.end.positionX,self.end.positionY,")\n\n","delta(",self.delta_x, self.delta_y,") acc(", self.stepAccelerationX,self.stepAccelerationY,") reste(",self.catchupX,self.catchupY,") temps(", tempsX,tempsY,")\n\n", self.travelActions,"\n\n")
 			raise RuntimeWarning("échec lors du décplacement, le traineau n'est pas correctement arrivé a destination")
@@ -781,17 +782,17 @@ class chemin:
 		#ralentissement total (si ajustements nécéssaires)
 		if(self.catchupX != 0):
 			self.ralentissement_x(self.catchupX, 1)
-		
+
 
 	def lineY(self):
 		intermediaryAccelerations = math.floor(math.sqrt(abs(self.delta_y)/self.stepAccelerationY))
-		
+
 		for i in range(intermediaryAccelerations):
 			self.acceleration_y(self.stepAccelerationY,1)
 
 		for i in range(intermediaryAccelerations-1):
 			self.ralentissement_y(self.stepAccelerationY,1)
-			
+
 		# flotter jusqu'a la fin
 		dist =  (abs(self.end.positionY - self.traineau.positionY) // self.stepAccelerationY)
 		if( dist > 0 ):
