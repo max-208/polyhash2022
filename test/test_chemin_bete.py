@@ -4,7 +4,7 @@ import inspect
 from scipy.spatial import distance
 import math
 
-challenge = "b_better_hurry.in.txt"
+challenge = "d_decorated_houses.in.txt"
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -43,7 +43,7 @@ while (secondes > 0 and maxVal != -math.inf):
 			for group in row:
 				score = group.getScore()
 				accCalculator.updatePoids(group.getPoids() + 8)
-				if(score == 0 or (group.positionX == 0 and group.positionY == 0)):
+				if(score == 0 or (group.positionX == 0 and group.positionY == 0) or group.delivre == True):
 					val = -math.inf
 				else:
 					val = score*10 - group.getPoids()*2
@@ -52,27 +52,29 @@ while (secondes > 0 and maxVal != -math.inf):
 						maxGroup = group
 		
 		print("---",secondes,",",maxVal, "(",maxGroup.positionX,",",maxGroup.positionY,") ->",maxGroup.getScore())# [str(cadeau) for cadeau in maxGroup.cadeaux])
-		accCalculator.updatePoids(maxGroup.getPoids() + 8) # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
-		cheminAller = chemin(groupe(0,0),maxGroup,reachRange,accCalculator)
-		cheminAller.move()
-		accCalculator.updatePoids(4) # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
-		cheminRetour = chemin(maxGroup,groupe(0,0),reachRange,accCalculator)
-		cheminRetour.move()
+		cheminRetour = chemin(maxGroup,groupe(0,0),reachRange,accCalculator,0)
+		cheminAller = chemin(groupe(0,0),maxGroup,reachRange,accCalculator,maxGroup.getPoids() + cheminRetour.carotteConsommes)
 		bcl = boucle()
 		bcl.chemins = [cheminAller,cheminRetour]
 
-		carrotCount = bcl.getCarotteConsommes()
-		if(carrotCount > 0):
-			bcl.loadingActions = [["LoadCarrots",carrotCount]]
-		for cadeau in maxGroup.cadeaux:
-			if(not cadeau.delivre):
-				bcl.loadingActions.append(["LoadGift",cadeau.nom])
-				cadeau.delivre = True
 
 		#print(str(bcl))
 		if(secondes - bcl.getTempsConsomme() >= 0):
 			parcoursFinal.boucles.append(bcl)
 			secondes = secondes - bcl.getTempsConsomme()
+			cheminAller.move()
+			cheminRetour.move()
+			carrotCount = bcl.getCarotteConsommes()
+			if(carrotCount > 0):
+				bcl.loadingActions = [["LoadCarrots",carrotCount]]
+			for cadeau in maxGroup.cadeaux:
+				if(not cadeau.delivre):
+					bcl.loadingActions.append(["LoadGift",cadeau.nom])
+					cadeau.delivre = True
+		else:
+			maxGroup.delivre = True
+			for cadeau in maxGroup.cadeaux:
+				cadeau.delivre = True
 
 print("----------------")
 print(secondes)

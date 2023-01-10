@@ -568,7 +568,7 @@ class chemin:
 	"""
 	classe représentant un chemin, un chemin est une suite d'actions représentant un mouvement
 	"""
-	def __init__(self,begining: groupe, end: groupe, reachRange : int = 0, accelerationCalculator : accelerationCalculator = None) -> None:
+	def __init__(self,begining: groupe, end: groupe, reachRange : int = 0, accCalc : accelerationCalculator = None,poidsTransfere : int = 0) -> None:
 		self.begining = begining
 		self.end = end
 		self.travelActions:list[list[str|int]] = []
@@ -582,33 +582,68 @@ class chemin:
 		# 	["LoadGift", "Amine"]
 		# ]
 		self.reachRange = reachRange
-		self.tempsConsomme = 0
-		self.carotteConsommes = 0
-		self.accelerationCalculator = accelerationCalculator
+		self.accelerationCalculator = accelerationCalculator(accCalc.ranges)
 		self.traineau = traineau(self.reachRange,self.accelerationCalculator)
+
 		#Distance relative entre le point initial et le point destination
 		self.delta_x: int = end.positionX - begining.positionX 		#delta_x corresponds à la distance relative en C
 		self.delta_y: int = end.positionY - begining.positionY		#delta_y corresponds à la distance relative en R
+		self.abs_delta_x = abs(self.delta_x)
+		self.abs_delta_y = abs(self.delta_y)
+
+		#prédiction a l'avance du nombre de carottes et du temps consommé pour ce chemin
+		self.tempsConsomme = 0
+		self.carotteConsommes = 0
+		self.accelerationCalculator.updatePoids(poidsTransfere)
+		while(True):
+			acc = self.accelerationCalculator.getMaxAcceleration()
+
+			self.stepAccelerationX = acc if acc < self.abs_delta_x else self.abs_delta_x
+			self.stepAccelerationY = acc if acc < self.abs_delta_y else self.abs_delta_y
+
+			self.catchupX = self.abs_delta_x%acc if acc < self.abs_delta_x else 0
+			self.catchupY = self.abs_delta_y%acc if acc < self.abs_delta_y else 0
+
+			dist = (abs(self.end.positionX - self.traineau.positionX) // self.stepAccelerationX)
+
+
+			self.carotteConsommes = 0
+			self.tempsConsomme = 0
+			if(self.stepAccelerationX != 0):
+				nbAccX = 2 * math.floor(math.sqrt(self.abs_delta_x/self.stepAccelerationX))
+				self.carotteConsommes += nbAccX
+				self.tempsConsomme += self.abs_delta_x//self.stepAccelerationX - (nbAccX//2)**2
+				if(self.catchupX != 0):
+					self.carotteConsommes += 1
+			if(self.stepAccelerationY != 0):
+				nbAccY = 2 * math.floor(math.sqrt(self.abs_delta_y/self.stepAccelerationY))
+				self.carotteConsommes += nbAccY
+				self.tempsConsomme += self.abs_delta_y//self.stepAccelerationY - (nbAccY//2)**2
+				if(self.catchupY != 0):
+					self.carotteConsommes += 1
+			self.tempsConsomme += self.carotteConsommes
+
+			self.accelerationCalculator.updatePoids(poidsTransfere + self.carotteConsommes)
+			if(self.accelerationCalculator.getMaxAcceleration() == acc):
+				break
+
+			if(self.accelerationCalculator.getMaxAcceleration() <= 0):
+				self.carotteConsommes = -math.inf
+				self.tempsConsomme = -math.inf
+				return
+		#print("carrote", self.carotteConsommes,"temps",self.tempsConsomme,"poids",poidsTransfere+self.carotteConsommes,"transfert",poidsTransfere,"acc",self.accelerationCalculator.getMaxAcceleration())
+
 		
 	def move(self):
+		self.tempsConsommeCalc = 0
+		self.carotteConsommesCalc = 0
+
 		self.traineau.positionX = self.begining.positionX
 		self.traineau.positionY = self.begining.positionY
 		self.traineau.ignoreCarottes = True
 		self.travelActions = []
-		self.carotteConsommes = 0
-		self.tempsConsomme = 0
 		if(self.accelerationCalculator.getMaxAcceleration() <= 0):
-			self.tempsConsomme = -math.inf
 			return
-		
-		# calcul de l'accélération maximale possible permettant d'arriver a point + l'éventuel rattrapage a effectuer
-		acc = self.accelerationCalculator.getMaxAcceleration()
-
-		self.stepAccelerationX = acc if acc < abs(self.delta_x) else abs(self.delta_x)
-		self.stepAccelerationY = acc if acc < abs(self.delta_y) else abs(self.delta_y)
-
-		self.catchupX = abs(self.delta_x)%acc if acc < abs(self.delta_x) else 0
-		self.catchupY = abs(self.delta_y)%acc if acc < abs(self.delta_y) else 0
 
 		# calcul du nombre d'étapes nécéssaires pour s'aligner avec la coordonnée de l'objectif en allant a la vitesse calculée ci-dessus
 		tempsX = math.dist([self.begining.positionX],[self.end.positionX])//self.stepAccelerationX if self.stepAccelerationX > 0 else 0
@@ -642,7 +677,7 @@ class chemin:
 		#   ^ . -- . -- b         ^ . -- b
 		#      >        <            >  <
 		#
-		else: #elif(abs(self.delta_x)/self.stepAccelerationX + abs(self.delta_y)/self.stepAccelerationY <= 3):
+		else: #elif(self.abs_delta_x/self.stepAccelerationX + self.abs_delta_y/self.stepAccelerationY <= 3):
 			#print("L")
 			# alignement sur l'axe Y
 			self.lineY()
@@ -753,6 +788,14 @@ class chemin:
 		for cadeau in self.end.cadeaux:
 			if(not cadeau.delivre):
 				self.travelActions.append(["DeliverGift", cadeau.nom])
+
+		if(self.carotteConsommes != self.carotteConsommesCalc):
+			print("\n\n(",self.begining.positionX,self.begining.positionY,") --(",self.traineau.positionX,self.traineau.positionY,")--> (",self.end.positionX,self.end.positionY,")\n\n","delta(",self.delta_x, self.delta_y,") acc(", self.stepAccelerationX,self.stepAccelerationY,") reste(",self.catchupX,self.catchupY,") temps(", tempsX,tempsY,")\n\n", self.travelActions,"\n\n")
+			raise RuntimeWarning("erreur carrote",self.carotteConsommes,self.carotteConsommesCalc)
+
+		if(self.tempsConsomme != self.tempsConsommeCalc):
+			print("\n\n(",self.begining.positionX,self.begining.positionY,") --(",self.traineau.positionX,self.traineau.positionY,")--> (",self.end.positionX,self.end.positionY,")\n\n","delta(",self.delta_x, self.delta_y,") acc(", self.stepAccelerationX,self.stepAccelerationY,") reste(",self.catchupX,self.catchupY,") temps(", tempsX,tempsY,")\n\n", self.travelActions,"\n\n")
+			raise RuntimeWarning("erreur temps",self.tempsConsomme,self.tempsConsommeCalc)
 				
 		if(self.traineau.positionX != self.end.positionX or self.traineau.positionY != self.end.positionY):
 			print("\n\n(",self.begining.positionX,self.begining.positionY,") --(",self.traineau.positionX,self.traineau.positionY,")--> (",self.end.positionX,self.end.positionY,")\n\n","delta(",self.delta_x, self.delta_y,") acc(", self.stepAccelerationX,self.stepAccelerationY,") reste(",self.catchupX,self.catchupY,") temps(", tempsX,tempsY,")\n\n", self.travelActions,"\n\n")
@@ -760,7 +803,7 @@ class chemin:
 
 	def lineX(self):
 
-		intermediaryAccelerations = math.floor(math.sqrt(abs(self.delta_x)/self.stepAccelerationX))
+		intermediaryAccelerations = math.floor(math.sqrt(self.abs_delta_x/self.stepAccelerationX))
 
 		for i in range(intermediaryAccelerations):
 			self.acceleration_x(self.stepAccelerationX,1)
@@ -773,7 +816,7 @@ class chemin:
 		if(dist > 0):
 			self.traineau.flotter(dist)
 			self.travelActions.append(["Float",dist])
-			self.tempsConsomme += dist
+			self.tempsConsommeCalc += dist
 
 		# ralentissement partiel
 		self.ralentissement_x(self.stepAccelerationX - self.catchupX,1)
@@ -784,7 +827,7 @@ class chemin:
 		
 
 	def lineY(self):
-		intermediaryAccelerations = math.floor(math.sqrt(abs(self.delta_y)/self.stepAccelerationY))
+		intermediaryAccelerations = math.floor(math.sqrt(self.abs_delta_y/self.stepAccelerationY))
 		
 		for i in range(intermediaryAccelerations):
 			self.acceleration_y(self.stepAccelerationY,1)
@@ -797,7 +840,7 @@ class chemin:
 		if( dist > 0 ):
 			self.traineau.flotter(dist)
 			self.travelActions.append(["Float",dist])
-			self.tempsConsomme += dist
+			self.tempsConsommeCalc += dist
 
 		# ralentissement partiel
 		self.ralentissement_y(self.stepAccelerationY-self.catchupY,1)
@@ -809,37 +852,37 @@ class chemin:
 	def acceleration_x(self,acceleration : int, numFloat: int):
 			self.traineau.accelerer(acceleration, "left" if self.delta_x < 0 else "right")
 			self.travelActions.append(["AccLeft" if self.delta_x < 0 else "AccRight",acceleration])
-			self.carotteConsommes +=1
+			self.carotteConsommesCalc +=1
 			self.traineau.flotter(numFloat)
 			self.travelActions.append(["Float",numFloat])
-			self.tempsConsomme += numFloat
+			self.tempsConsommeCalc += numFloat
 			#print("acceleration x :",self.traineau.positionX, self.traineau.vitesseX)
 
 	def ralentissement_x(self,acceleration : int, numFloat: int):
 			self.traineau.accelerer(acceleration,"right" if self.delta_x < 0 else "left")
 			self.travelActions.append(["AccRight" if self.delta_x < 0 else "AccLeft",acceleration])
-			self.carotteConsommes +=1
+			self.carotteConsommesCalc +=1
 			self.traineau.flotter(numFloat)
 			self.travelActions.append(["Float",numFloat])
-			self.tempsConsomme += numFloat
+			self.tempsConsommeCalc += numFloat
 			#print("ralentissement x :", self.traineau.positionX, self.traineau.vitesseX)
 
 	def acceleration_y(self,acceleration : int, numFloat: int):
 			self.traineau.accelerer(acceleration, "down" if self.delta_y < 0 else "up")
 			self.travelActions.append(["AccDown" if self.delta_y < 0 else "AccUp",acceleration])
-			self.carotteConsommes +=1
+			self.carotteConsommesCalc +=1
 			self.traineau.flotter(numFloat)
 			self.travelActions.append(["Float",numFloat])
-			self.tempsConsomme += numFloat
+			self.tempsConsommeCalc += numFloat
 			#print("acceleration y :",self.traineau.positionY, self.traineau.vitesseY)
 
 	def ralentissement_y(self,acceleration : int, numFloat: int):
 			self.traineau.accelerer(acceleration,"up" if self.delta_y < 0 else "down")
 			self.travelActions.append(["AccUp" if self.delta_y < 0 else "AccDown",acceleration])
-			self.carotteConsommes +=1
+			self.carotteConsommesCalc +=1
 			self.traineau.flotter(numFloat)
 			self.travelActions.append(["Float",numFloat])
-			self.tempsConsomme += numFloat
+			self.tempsConsommeCalc += numFloat
 			#print("ralentissement y : ", self.traineau.positionY, self.traineau.vitesseY)
 
 	def __str__(self) -> str:
