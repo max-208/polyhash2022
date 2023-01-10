@@ -175,23 +175,23 @@ class groupe:
 			raise RuntimeWarning("il est impossible de retirer un cadeau d'un groupe si celui-ci n'en fait pas partie")
 		return self
 
-	def getPoids(self) -> int:
+	def getPoids(self, showTransport:bool=True) -> int:
 		"""
 		retourne le poids du groupe (somme cummulée du poids de tout les cadeaux accesibles via ce groupe)
 
 		Returns:
 			int: poids du groupe
 		"""
-		return sum([(0 if elem.delivre else elem.poids) for elem in self.cadeaux])
+		return sum([(0 if elem.delivre or (elem.enTransport and showTransport) else elem.poids) for elem in self.cadeaux])
 
-	def getScore(self) -> int:
+	def getScore(self, showTransport:bool=True) -> int:
 		"""
 		retourne le score du groupe (somme cummulée du score de tout les cadeaux accesibles via ce groupe)
 
 		Returns:
 			int: score du groupe
 		"""
-		return sum([(0 if elem.delivre else elem.score) for elem in self.cadeaux])
+		return sum([(0 if elem.delivre or (elem.enTransport and showTransport) else elem.score) for elem in self.cadeaux])
 
 
 class region():
@@ -241,7 +241,7 @@ class region():
 		Returns:
 			int: poids global de la région
 		"""
-		return sum([(0 if elem.delivre else elem.poids) for elem in self.cadeaux])
+		return sum([(0 if elem.delivre or elem.enTransport else elem.poids) for elem in self.cadeaux])
 
 	def getScore(self) -> int:
 		"""
@@ -251,7 +251,7 @@ class region():
 		Returns:
 			int: score global de la région
 		"""
-		return sum([(0 if elem.delivre else elem.score) for elem in self.cadeaux])
+		return sum([(0 if elem.delivre or elem.enTransport else elem.score) for elem in self.cadeaux])
 
 	def getGroups(self) -> list[list[groupe]]:
 		"""
@@ -597,15 +597,16 @@ class chemin:
 		self.accelerationCalculator.updatePoids(poidsTransfere)
 		while(True):
 			acc = self.accelerationCalculator.getMaxAcceleration()
+			if(acc == 0):
+				self.carotteConsommes = math.inf
+				self.tempsConsomme = math.inf
+				return
 
 			self.stepAccelerationX = acc if acc < self.abs_delta_x else self.abs_delta_x
 			self.stepAccelerationY = acc if acc < self.abs_delta_y else self.abs_delta_y
 
 			self.catchupX = self.abs_delta_x%acc if acc < self.abs_delta_x else 0
 			self.catchupY = self.abs_delta_y%acc if acc < self.abs_delta_y else 0
-
-			dist = (abs(self.end.positionX - self.traineau.positionX) // self.stepAccelerationX)
-
 
 			self.carotteConsommes = 0
 			self.tempsConsomme = 0
@@ -628,8 +629,8 @@ class chemin:
 				break
 
 			if(self.accelerationCalculator.getMaxAcceleration() <= 0):
-				self.carotteConsommes = -math.inf
-				self.tempsConsomme = -math.inf
+				self.carotteConsommes = math.inf
+				self.tempsConsomme = math.inf
 				return
 		#print("carrote", self.carotteConsommes,"temps",self.tempsConsomme,"poids",poidsTransfere+self.carotteConsommes,"transfert",poidsTransfere,"acc",self.accelerationCalculator.getMaxAcceleration())
 
@@ -913,6 +914,20 @@ class boucle:
 		for chemin in self.chemins:
 			ret += chemin.tempsConsomme
 		return ret
+
+	def getPoids(self):
+		ret = 0
+		for chemin in self.chemins:
+			ret += chemin.carotteConsommes
+			ret += chemin.end.getPoids(False)
+		return ret
+
+	def getScore(self):
+		ret = 0
+		for chemin in self.chemins:
+			ret += chemin.end.getScore(False)
+		return ret
+
 
 	def __str__(self) -> str:
 		boucle_str = str()
