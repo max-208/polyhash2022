@@ -39,9 +39,9 @@ while (secondes > 0 and maxVal != -math.inf):
 	# pour cette région on prend le meilleur point
 	if(maxRegion != None):
 		maxVal = -math.inf
-		sousmaxVal = -math.inf
 		maxGroup = groupe(0,0)
-		sousMaxGroup = groupe(0,0)
+		sousmaxVal = -math.inf
+		sousMaxGroup = groupe(0, 0)
 		groups = maxRegion.getGroups()
 		for row in groups:
 			for group in row:
