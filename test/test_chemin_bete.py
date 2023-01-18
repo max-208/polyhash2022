@@ -3,15 +3,17 @@ import sys
 import inspect
 from scipy.spatial import distance
 import math
+'''
+Import de toutes nos classes du fichier model.py
+'''
+from model import cadeau,groupe, heatMap, chemin, boucle, parcoursFinal,traineau,accelerationCalculator
+import fileParser
 
 challenge = "c_carousel.in.txt"
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
-
-from model import cadeau,groupe, heatMap, chemin, boucle, parcoursFinal,traineau,accelerationCalculator
-import fileParser
 
 (cadeaux, secondes, reachRange, accCalculator) = fileParser.parseChallenge(challenge)
 
@@ -37,7 +39,9 @@ while (secondes > 0 and maxVal != -math.inf):
 	# pour cette région on prend le meilleur point
 	if(maxRegion != None):
 		maxVal = -math.inf
+		sousmaxVal = -math.inf
 		maxGroup = groupe(0,0)
+		sousMaxGroup = groupe(0,0)
 		groups = maxRegion.getGroups()
 		for row in groups:
 			for group in row:
@@ -45,16 +49,27 @@ while (secondes > 0 and maxVal != -math.inf):
 				accCalculator.updatePoids(group.getPoids() + 8)
 				if(score == 0 or (group.positionX == 0 and group.positionY == 0)):
 					val = -math.inf
+					sousmaxVal = -math.inf
 				else:
 					val = score*10 - group.getPoids()*2
 					if(val > maxVal):
+						sousmaxVal = maxVal
+						sousMaxGroup = maxGroup
 						maxVal = val
 						maxGroup = group
+					elif (val <= maxVal and val > sousmaxVal):
+						sousmaxVal = val
+						sousMaxGroup = group
 
 		print("---",secondes,",",maxVal, "(",maxGroup.positionX,",",maxGroup.positionY,") ->",maxGroup.getScore())# [str(cadeau) for cadeau in maxGroup.cadeaux])
 		accCalculator.updatePoids(maxGroup.getPoids() + 8) # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
 		cheminAller = chemin(groupe(0,0),maxGroup,reachRange,accCalculator)
 		cheminAller.move()
+
+		accCalculator.updatePoids(sousMaxGroup.getPoids() + 8)  # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
+		cheminIntermediaire = chemin(maxGroup, sousMaxGroup, reachRange, accCalculator)
+		cheminIntermediaire.move()
+
 		accCalculator.updatePoids(4) # on ajoute +8 pour représenter le pire cas possible d'utilisation de carottes, sujet a changement
 		cheminRetour = chemin(maxGroup,groupe(0,0),reachRange,accCalculator)
 		cheminRetour.move()
