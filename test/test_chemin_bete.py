@@ -74,7 +74,7 @@ while (secondes > 0 and maxVal != -math.inf):
 		cheminRetour = chemin(maxGroup,groupe(0,0),reachRange,accCalculator)
 		cheminRetour.move()
 		bcl = boucle()
-		bcl.chemins = [cheminAller,cheminRetour]
+		bcl.chemins = [cheminAller,cheminIntermediaire,cheminRetour]
 
 		carrotCount = bcl.getCarotteConsommes()
 		if(carrotCount > 0):
