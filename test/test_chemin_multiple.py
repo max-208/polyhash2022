@@ -10,12 +10,14 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 
-from model import cadeau,groupe, heatMap, chemin, boucle, parcoursFinal,traineau,accelerationCalculator
+from model import cadeau,groupe, heatMap, chemin, boucle, parcoursFinal,traineau,accelerationCalculator, rangeCalculator
 import fileParser
 
+#chargement du challenge
 (cadeaux, secondes, reachRange, accCalculator) = fileParser.parseChallenge(challenge)
 
-heatmap = heatMap(reachRange,cadeaux)
+r = rangeCalculator(reachRange)
+heatmap = heatMap(r,cadeaux)
 parcoursFinal = parcoursFinal()
 maxValRegion = 0
 while (secondes > 0 and maxValRegion != -math.inf):
@@ -53,9 +55,10 @@ while (secondes > 0 and maxValRegion != -math.inf):
 						if(val > maxValGroupe):
 							maxValGroupe = val
 							maxGroup = group
-
-			cheminRetour = chemin(maxGroup,previousGroup,reachRange,accCalculator,bcl.getPoids())
-			cheminAller = chemin(groupe(0,0),maxGroup,reachRange,accCalculator,bcl.getPoids() + cheminRetour.carotteConsommes + maxGroup.getPoids())
+			
+			# a partir de ce meilleur point on essaie de mettre a jour le parcours, d'abbord 
+			cheminRetour = chemin(maxGroup,previousGroup,r,accCalculator,bcl.getPoids())
+			cheminAller = chemin(groupe(0,0),maxGroup,r,accCalculator,bcl.getPoids() + cheminRetour.carotteConsommes + maxGroup.getPoids())
 
 			#print(str(bcl))
 			if(secondes - (bcl.getTempsConsomme() + cheminRetour.tempsConsomme + cheminAller.tempsConsomme)  >= 0 and maxValGroupe != -math.inf):

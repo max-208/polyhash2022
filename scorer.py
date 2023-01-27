@@ -1,11 +1,12 @@
-from model import traineau,heatMap
+from model import traineau,heatMap,rangeCalculator
 import fileParser
 
 def score(problemFineName, solutionFileName) -> int:
 	(cadeaux, timeLimit,reachrange,acccalc) = fileParser.parseChallenge(problemFineName)	
 	instructions = fileParser.parseSolution(solutionFileName)
-	t = traineau(reachrange,acccalc)
-	map = heatMap(reachrange,cadeaux)
+	r = rangeCalculator(reachrange)
+	t = traineau(r,acccalc)
+	map = heatMap(r,cadeaux)
 	timeSpent = 0
 	score = 0
 	for instruction in instructions:

@@ -1,3 +1,5 @@
 # Ce fichier contient les modules pip requis par le projet
 flake8
 pep8-naming
+scipy
+tkinter
